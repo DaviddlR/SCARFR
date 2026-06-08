@@ -1,0 +1,23 @@
+Package: scaRf
+Type: Package
+Title: Train and evaluate SCARF on a given dataset
+Version: 0.1.0
+Authors@R: c(
+    person(
+      "David", "de la Rosa",
+      email = "drrosa@ujaen.es",
+      role = c("aut", "cre")
+    )
+  )
+Description: A set of tools to train and evaluate the SCARF model into a given
+    dataset, avoiding the need to rely on Python.
+    Objetive. trained_model <- train(dataset)
+    Objective. results <- downstream(trained_model, dataset)
+    Objective. latent_features <- get_features(trained_model, dataset)
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    luz,
+    torch
+Config/roxygen2/version: 8.0.0
