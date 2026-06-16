@@ -31,10 +31,10 @@ read_parquet_data = function(filename_train, filename_test){
   # Separate target columns
   target_cols <- c("label", "attack_cat")
 
-  x_train_orig <- df_train[, !(names(df) %in% target_cols), drop=FALSE]
+  x_train_orig <- df_train[, !(names(df_train) %in% target_cols), drop=FALSE]
   y_train_orig <- df_train$attack_cat
 
-  x_test_orig <- df_test[, !(names(df) %in% target_cols), drop=FALSE]
+  x_test_orig <- df_test[, !(names(df_test) %in% target_cols), drop=FALSE]
   y_test_orig <- df_test$attack_cat
 
   # Validation set (10%)
@@ -60,8 +60,9 @@ read_parquet_data = function(filename_train, filename_test){
   rec <- recipes::recipe(~ ., data=x_train)
 
   rec <- recipes::step_novel(rec, recipes::all_nominal_predictors(), new_level = "unknown") |> # New categorical levels (should not be used)
-    recipes::step_dummy(recipes::all_numeric_predictors(), one_hot = TRUE) |>  # One-hot encoding
-    recipes::step_normalize(recipes::all_numeric_predictors())  # Standard normalization
+    recipes::step_normalize(recipes::all_numeric_predictors()) |> # Standard normalization
+    recipes::step_dummy(recipes::all_nominal_predictors(), one_hot = TRUE)  # One-hot encoding
+
 
   # Fit recipe to training set
   trained_recipe <- recipes::prep(rec, training = x_train)
@@ -94,11 +95,13 @@ read_parquet_data = function(filename_train, filename_test){
 }
 
 
-train_path <- "inst/extdata/UNSW_NB15_training-set.parquet"
-test_path <- "inst/extdata/UNSW_NB15_testing-set.parquet"
-datasets <- read_parquet_data(train_path, test_path)
-train_ds <- datasets$train_set
-
-
+# train_path <- "inst/extdata/UNSW_NB15_training-set.parquet"
+# test_path <- "inst/extdata/UNSW_NB15_testing-set.parquet"
+# datasets <- read_parquet_data(train_path, test_path)
+# train_ds <- datasets$train_set
+#
+# ejemplo_x <- datasets$train_set[1, , drop = FALSE]
+# ejemplo_y <- datasets$train_label[54000]
+# ejemplo_y
 
 
