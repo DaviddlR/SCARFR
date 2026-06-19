@@ -63,6 +63,38 @@ scarf_encoder <- torch::nn_module(
 
 
 
+SCARF_wrapper <- torch::nn_module(  # Something like SCARF lightning but we do not define train_step here
+  name = "SCARF wrapper",
+
+  initialize = function(in_dim, hidden_dim, num_hidden, head_hidden_dim, head_num_hidden, dropout = 0.0) {
+    self$main_encoder <- scarf_encoder(in_dim = in_dim, hidden_dim = hidden_dim, num_hidden = num_hidden, dropout = dropout)
+    self$projection_head <- scarf_encoder(in_dim = hidden_dim, hidden_dim = head_hidden_dim, num_hidden = head_num_hidden, dropout = dropout)
+  },
+
+  forward = function(x_input) {  # Here it comes a list with (original sample, corrupted sample). See luz callback
+
+
+    # Take original and corrupted sample
+    x_original <- x_input[[1]]
+    x_corrupted <- x_input[[2]]
+
+    # Encode it using encoder and projection head
+    x_original_encoded <- self$main_encoder(x_original)
+    x_corrupted_encoded <- self$main_encoder(x_corrupted)
+
+    z_original <- self$projection_head(x_original_encoded)
+    z_corrupted <- self$projection_head(x_corrupted_encoded)
+
+
+    # z_original <- self$projection_head(self$main_encoder(x_original))
+    # z_corrupted <- self$projection_head(self$main_encoder(x_corrupted))
+
+    result <- c(z_original, z_corrupted)
+
+  }
+)
+
+
 
 
 

@@ -5,3 +5,5 @@
 data/*
 inst/*
 used_packages.R
+
+*.rds
