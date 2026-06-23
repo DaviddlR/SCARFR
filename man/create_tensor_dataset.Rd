@@ -2,28 +2,24 @@
 % Please edit documentation in R/tensor_dataset.R
 \name{create_tensor_dataset}
 \alias{create_tensor_dataset}
-\title{Creation of a tensor dataset.}
+\title{Title}
 \usage{
-create_tensor_dataset(data, target)
+create_tensor_dataset(data)
 }
 \arguments{
 \item{data}{Original data samples}
-
-\item{target}{Original label samples}
 }
 \value{
 A 'torch::dataset' that contains the data.
 }
 \description{
-Creation of a tensor dataset.
+Title
 }
 \examples{
 X_fake <- matrix(runif(50*4), nrow=50, ncol=4)
-y_fake <- sample(0:1, 50, replace=TRUE)
 
-my_dataset <- create_tensor_dataset(X_fake, y_fake)
+my_dataset <- create_tensor_dataset(X_fake)
 
 first_item <- my_dataset$.getitem(1)
 print(first_item$x)
-print(first_item$y)
 }

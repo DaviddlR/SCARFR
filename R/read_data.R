@@ -4,82 +4,78 @@
 
 #' Title
 #'
-#' @param dataframe_train a
-#' @param dataframe_test a
-#' @param target_column a
-#' @param exclude_columns a
-#' @param create_validation a
+#' @param dataframe_train Train dataframe
+#' @param exclude_columns Columns that the pretraining model should avoid (i.e target columns)
+#' @param create_validation Indicate whether a validation set should be created
+#' @param validation_proportion Proportion of the training samples that will be used to create the validation set, if required.
 #'
-#' @returns a
+#' @returns Preprocessed train dataset (and validation set if required) and the recipe used for preprocessing
 #' @export
 #'
 #' @examples
-#' a <- 1
-prepare_scarf_data = function(dataframe_train, dataframe_test, target_column, exclude_columns, create_validation = FALSE) {
+#' data(iris)
+#'
+#' data_ready <- prepare_scarf_data(dataframe_train = iris, exclude_columns = "Species", create_validation = TRUE)
+#'
+#' dim(data_ready$train_set)
+prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_validation = FALSE, validation_proportion = 0.1) {
 
   df_train_data <- as.data.frame(dataframe_train)
-  df_test_data <- as.data.frame(dataframe_test)
 
   # Remove unneeded columns and create "y" as the target column
   x_train_orig <- df_train_data[, !(names(df_train_data) %in% exclude_columns), drop=FALSE]
-  x_test_orig <- df_test_data[, !(names(df_train_data) %in% exclude_columns), drop=FALSE]
-  y_train_orig <- df_train_data[[target_column]]
-  y_test_orig <- df_test_data[[target_column]]
 
-  # Validation set (10%)
-  n_samples <- nrow(x_train_orig)
-  val_size <- floor(0.1 * n_samples)
-  val_indices <- sample(seq_len(n_samples), size=val_size)
+  # Validation set
+  if(create_validation){
+    n_samples <- nrow(x_train_orig)
+    validation_size <- floor(validation_proportion * n_samples)
+    val_indices <- sample(seq_len(n_samples), size=validation_size)
 
-  x_val <- x_train_orig[val_indices, , drop=FALSE]
-  y_val <- y_train_orig[val_indices]
+    x_val <- x_train_orig[val_indices, , drop=FALSE]
+    x_train <- x_train_orig[-val_indices, , drop=FALSE]
 
-  x_train <- x_train_orig[-val_indices, , drop=FALSE]
-  y_train <- y_train_orig[-val_indices]
-
-  # Label encoder
-  y_train_factor <- as.factor(y_train)
-  train_levels <- levels(y_train_factor)
-
-  y_train_encoded <- as.integer(y_train_factor)
-  y_val_encoded <- as.integer(factor(y_val, levels = train_levels))
-  y_test_encoded <- as.integer(factor(y_test_orig, levels = train_levels))
+  } else {
+    x_train <- x_train_orig
+    x_val <- NULL
+  }
 
   # One hot encoding + standard scaler
   rec <- recipes::recipe(~ ., data=x_train)
 
-  rec <- recipes::step_novel(rec, recipes::all_nominal_predictors(), new_level = "unknown") |> # New categorical levels (should not be used)
-    recipes::step_normalize(recipes::all_numeric_predictors()) |> # Standard normalization
+  rec <- recipes::step_novel(rec, recipes::all_nominal_predictors(), new_level = "unknown") |>  # New categorical levels (should not be used)
+    recipes::step_normalize(recipes::all_numeric_predictors()) |>  # Standard normalization
     recipes::step_dummy(recipes::all_nominal_predictors(), one_hot = TRUE)  # One-hot encoding
 
 
   # Fit recipe to training set
   trained_recipe <- recipes::prep(rec, training = x_train)
 
-  # Apply preprocessing to train, validation and test sets
+  # Apply preprocessing to train and create matrix
   x_train_processed <- recipes::bake(trained_recipe, new_data = x_train)
-  x_val_processed <- recipes::bake(trained_recipe, new_data = x_val)
-  x_test_processed <- recipes::bake(trained_recipe, new_data = x_test_orig)
-
-  # Convert to matrices
   x_train_mat <- as.matrix(x_train_processed)
-  x_val_mat <- as.matrix(x_val_processed)
-  x_test_mat <- as.matrix(x_test_processed)
+
+
+
+  # Bake validation set (if exists)
+  x_val_mat <- NULL
+
+
+  if(create_validation){
+    x_val_processed <- recipes::bake(trained_recipe, new_data = x_val)
+    x_val_mat <- as.matrix(x_val_processed)
+  }
 
   print("Train set: ")
   print(dim(x_train_mat))
-  print("Validation set: ")
-  print(dim(x_val_mat))
-  print("Test set:")
-  print(dim(x_test_mat))
+  if(create_validation){
+    print("Validation set: ")
+    print(dim(x_val_mat))
+  }
 
 
   return (list("train_set" = x_train_mat,
-               "train_label" = y_train_encoded,
                "val_set" = x_val_mat,
-               "val_label" = y_val_encoded,
-               "test_set" = x_test_mat,
-               "test_label" = y_test_encoded))
+               "recipe" = trained_recipe))
 
 }
 

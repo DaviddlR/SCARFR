@@ -1,66 +1,54 @@
 
 
-#' Title
+
+
+#' SCARF pretraining
 #'
-#' @param path_train_data tdo
-#' @param path_test_data tdo
+#' @param dataframe_train Train dataframe
+#' @param exclude_columns Columns that the pretraining model should avoid (i.e target columns)
+#' @param create_validation Indicate whether a validation set should be created
+#' @param validation_proportion Proportion of the training samples that will be used to create the validation set, if required.
+#' @param batch_size Batch size used during pretraining
+#' @param n_epochs Number of pretraining epochs
 #'
-#' @returns tdo
-#'
+#' @returns A pretrained RDS model
 #' @export
 #'
 #' @examples
 #' a <- 1
-scarf_pretraining = function(path_train_data, path_test_data) {
+scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation = FALSE, validation_proportion = 0.1, batch_size = 256, n_epochs = 1, save_path = "trained_luz.pt") {
 
-  # Load data
-  preprocessed_datasets = read_parquet_data(path_train_data, path_test_data)
+  # Load and preprocess data
+  preprocessed_datasets <- prepare_scarf_data(dataframe_train, exclude_columns = exclude_columns, create_validation = create_validation, validation_proportion = validation_proportion)
 
   x_train <- preprocessed_datasets$train_set
   x_val <- preprocessed_datasets$val_set
-  x_test <- preprocessed_datasets$test_set
+  recipe <- preprocessed_datasets$recipe
 
-  y_train <- preprocessed_datasets$train_label
-  y_val <- preprocessed_datasets$val_label
-  y_test <- preprocessed_datasets$test_label
+  # Create training dataset and dataloader
+  train_ds <- create_tensor_dataset(x_train)
 
-  # print(dim(x_train))
-  # print(dim(x_val))
-  # print(dim(x_test))
-  # print(dim(y_train))
-  # print(dim(y_val))
-  # print(dim(y_test))
-
-  # Create tensor datasets
-  train_ds <- create_tensor_dataset(x_train, y_train)
-  val_ds <- create_tensor_dataset(x_val, y_val)
-  test_ds <- create_tensor_dataset(x_test, y_test)
-
-
-  batch_size <- 256
-
-  # Create dataloader
   train_dl <- dataloader(train_ds,
                          batch_size = batch_size,
                          shuffle = TRUE)
 
-  val_dl <- dataloader(val_ds,
-                       batch_size = batch_size,
-                       shuffle=FALSE)
+  # Create training dataset and dataloader (if required)
+  val_dl <- NULL
 
-  test_dl <- dataloader(test_ds,
-                        batch_size = batch_size,
-                        shuffle = FALSE)
+  if(create_validation) {
+    val_ds <- create_tensor_dataset(x_val)
 
-
-  # Create model, pretraining head and luz flow
+    val_dl <- dataloader(val_ds,
+                         batch_size = batch_size,
+                         shuffle=FALSE)
+  }
 
   fitted <- SCARF_wrapper |>
-    setup(
+    luz::setup(
       loss = nt_xent_loss(temperature = 0.5),
       optimizer = torch::optim_adam
     ) |>
-    set_hparams(
+    luz::set_hparams(
       in_dim = dim(x_train)[2],
       hidden_dim = 256,
       num_hidden = 4,
@@ -68,26 +56,38 @@ scarf_pretraining = function(path_train_data, path_test_data) {
       head_num_hidden = 2,
       dropout = 0.0,
     ) |>
-    set_opt_hparams(
+    luz::set_opt_hparams(
       lr = 0.0001,
     ) |>
-    fit(
+    luz::fit(
       train_dl,
-      epochs = 1,
+      epochs = n_epochs,
       valid_data = val_dl,
       callbacks = list(custom_scarf_step_callback(corruption_rate = 0.6))
     )
 
 
-  luz::luz_save(fitted, "scarf_trained.rds")
+  # Save trained model AND the recipe required to apply the same preprocessing to the test set
+  model_bundle <- list(
+    fitted_model = fitted,
+    recipe = recipe
+  )
+
+  class(model_bundle) <- c("scarf_bundle", "list")
+
+  torch::torch_save(model_bundle, path = save_path)
 
 
 
+
+
+  #luz::luz_save(fitted, "scarf_trained.rds")
 
 
 
 
 }
+
 
 
 
@@ -107,7 +107,7 @@ custom_scarf_step_callback <- luz::luz_callback(
     #print(ctx$batch[[1]]$device)
 
     batch <- ctx$batch
-    target <- batch$y  # Label. Not used during pre-training
+    #target <- batch$y  # Label. Not used during pre-training
 
     x <- batch$x  # Data
 
@@ -127,7 +127,7 @@ custom_scarf_step_callback <- luz::luz_callback(
     x_random <- torch::torch_gather(x, dim=1, index = random_indices)
     x_corrupted <- torch::torch_where(mask, x_random, x)
 
-    ctx$batch[[2]] <- batch$y
+    #ctx$batch[[2]] <- batch$y
     ctx$batch[[1]] <- c(x, x_corrupted)
 
 
@@ -138,7 +138,7 @@ custom_scarf_step_callback <- luz::luz_callback(
   # Validation
   on_valid_batch_begin = function() {
     batch = ctx$batch
-    target = batch$y  # Label. Not used during pre-training
+    #target = batch$y  # Label. Not used during pre-training
 
     x = batch$x  # Data
 
@@ -158,7 +158,7 @@ custom_scarf_step_callback <- luz::luz_callback(
     x_random <- torch::torch_gather(x, dim=1, index = random_indices)
     x_corrupted <- torch::torch_where(mask, x_random, x)
 
-    ctx$target <- batch$y
+    #ctx$target <- batch$y
     ctx$input <- c(x, x_corrupted)
   },
 

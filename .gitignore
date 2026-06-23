@@ -7,3 +7,4 @@ inst/*
 used_packages.R
 
 *.rds
+*.pt
