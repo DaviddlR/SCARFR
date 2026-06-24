@@ -5,7 +5,7 @@
 #' SCARF pretraining
 #'
 #' @param dataframe_train Train dataframe
-#' @param exclude_columns Columns that the pretraining model should avoid (i.e target columns)
+#' @param exclude_columns Columns that the pretraining model should avoid (i.e target or ID columns)
 #' @param create_validation Indicate whether a validation set should be created
 #' @param validation_proportion Proportion of the training samples that will be used to create the validation set, if required.
 #' @param batch_size Batch size used during pretraining

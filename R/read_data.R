@@ -2,15 +2,48 @@
 
 
 
-#' Title
+
+
+#' Prepare data for SCARF feature extraction
+#'
+#' @param dataframe Dataframe for feature extraction
+#' @param trained_recipe Trained recipes::recipe for preprocessing
+#' @param exclude_columns Columns that the pretraining model should avoid (i.e target or ID columns)
+#'
+#' @returns A torch::matrix representing the dataframe ready for feature extraction
+#'
+#' @examples
+prepare_scarf_data_for_feature_extraction = function(dataframe, trained_recipe, exclude_columns = NULL) {
+  df_extract <- as.data.frame(dataframe)
+
+  # Remove unneeded columns
+  x_extract <- df_extract[, !(names(df_extract) %in% exclude_columns), drop=FALSE]
+
+  # Apply preprocessing to the dataset using the trained recipe and create matrix
+  x_extract_processed <- recipes::bake(trained_recipe, new_data = x_extract)
+  x_extract_mat <- as.matrix(x_extract_processed)
+
+  print("Dataset ready for feature extraction: ")
+  print(dim(x_extract_mat))
+
+  return (x_extract_mat)
+}
+
+
+
+
+
+
+
+
+#' Prepare data for SCARF pretraining
 #'
 #' @param dataframe_train Train dataframe
-#' @param exclude_columns Columns that the pretraining model should avoid (i.e target columns)
+#' @param exclude_columns Columns that the pretraining model should avoid (i.e target or ID columns)
 #' @param create_validation Indicate whether a validation set should be created
 #' @param validation_proportion Proportion of the training samples that will be used to create the validation set, if required.
 #'
-#' @returns Preprocessed train dataset (and validation set if required) and the recipe used for preprocessing
-#' @export
+#' @returns Preprocessed train dataset (and validation set if required) and the recipes::recipe used for preprocessing
 #'
 #' @examples
 #' data(iris)
@@ -22,7 +55,7 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
 
   df_train_data <- as.data.frame(dataframe_train)
 
-  # Remove unneeded columns and create "y" as the target column
+  # Remove unneeded columns
   x_train_orig <- df_train_data[, !(names(df_train_data) %in% exclude_columns), drop=FALSE]
 
   # Validation set
