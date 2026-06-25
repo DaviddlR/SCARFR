@@ -19,19 +19,37 @@ scarf_feature_extractor = function(dataframe, pretrained_model_path, exclude_col
   model_bundle <- torch::torch_load(pretrained_model_path)
 
   # Validate input
-  if(inherits(model_bundle, "scarf_bundle")){
-    fitted_encoder <- model_bundle$fitted_model$main_encoder  # SCARF_wrapper -> SCARF_encoder
-    trained_recipe <- model_bundle$recipe
+  if(is.list(model_bundle) && identical(model_bundle$bundle_type, "scarf_bundle")) {
+
+    # Load encoder hyperparameters
+    hparams <- model_bundle$encoder_hparams
+
+    print(hparams)
+
+    # Create a new encoder
+    fitted_encoder <- scarf_encoder(
+      in_dim = hparams$in_dim,
+      hidden_dim = hparams$hidden_dim,
+      num_hidden = hparams$num_hidden,
+      dropout = hparams$dropout
+    )
+
+    # Load trained weights
+    fitted_encoder$load_state_dict(model_bundle$encoder_state_dict)
+
+    # Load recipe
+    trained_recipe <- unserialize(model_bundle$recipe)
+
   } else {
     stop("The input is not a scarf_bundle. Please, train the model using scarf_fit() and set the pretrained_model_path to the path in which the trained model is stored")
   }
 
   # Prepare data
-  dataframe <- prepare_scarf_data_for_feature_extraction(dataframe, trained_recipe, exclude_columns)
+  dataframe_cleaned <- prepare_scarf_data_for_feature_extraction(dataframe, trained_recipe, exclude_columns)
 
-  dataset_ready <- create_tensor_dataset(dataframe)
+  dataset_ready <- create_tensor_dataset(dataframe_cleaned)
 
-  dataloader_ready <- dataloader(dataset_ready,
+  dataloader_ready <- torch::dataloader(dataset_ready,
                          batch_size = batch_size,
                          shuffle = FALSE)
 
@@ -39,9 +57,34 @@ scarf_feature_extractor = function(dataframe, pretrained_model_path, exclude_col
   fitted_encoder$eval()
 
   # Extract latent features using the trained model
-  torch::with_no_grad(
-    coro
-  )
+  features_list <- list()
+
+  torch::with_no_grad({
+    coro::loop(
+      for(batch in dataloader_ready) {
+
+        # Take batch
+        x_batch <- batch[[1]]
+
+        # Forward pass
+        batch_latent <- fitted_encoder(x_batch)
+
+        # Store representations
+        features_list[[length(features_list) + 1]] <- batch_latent$cpu()
+
+      }
+    )
+  })
+
+  # Concatenate representations
+  all_features <- torch::torch_cat(features_list, dim=1)
+
+  # Convert to matrix
+  all_features <- as.matrix(all_features)
+
+  print(dim(all_features))
+
+  return(all_features)
 
 
 }

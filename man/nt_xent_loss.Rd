@@ -15,6 +15,3 @@ A 'torch::nn_module' representing the nt_xent_loss function.
 \description{
 Title
 }
-\examples{
-loss <- nt_xent_loss(temperature = 0.6)
-}

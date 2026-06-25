@@ -17,17 +17,3 @@ An object type 'list' with training, validation and testing (data and labels) su
 \description{
 Read parquet data and prepare for training
 }
-\examples{
-train_path <- system.file("extdata", "UNSW_NB15_training-set.parquet", package = "scaRf")
-test_path <- system.file("extdata", "UNSW_NB15_testing-set.parquet", package = "scaRf")
-if (train_path != "" && test_path != "") {
-  datasets <- read_parquet_data(train_path, test_path)
-
-  train_ds <- datasets$train_set
-  train_label <- datasets$train_label
-  validation_ds <- datasets$train_set
-  validation_label <- datasets$validation_label
-  test_ds <- datasets$train_set
-  test_label <- datasets$test_label
-}
-}

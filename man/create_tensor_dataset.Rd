@@ -15,11 +15,3 @@ A 'torch::dataset' that contains the data.
 \description{
 Title
 }
-\examples{
-X_fake <- matrix(runif(50*4), nrow=50, ncol=4)
-
-my_dataset <- create_tensor_dataset(X_fake)
-
-first_item <- my_dataset$.getitem(1)
-print(first_item$x)
-}

@@ -5,13 +5,14 @@
 #' SCARF pretraining
 #'
 #' @param dataframe_train Train dataframe
-#' @param exclude_columns Columns that the pretraining model should avoid (i.e target or ID columns)
-#' @param create_validation Indicate whether a validation set should be created
+#' @param exclude_columns Columns that the pretraining model should avoid (i.e target or ID columns).
+#' @param create_validation Indicate whether a validation set should be created.
 #' @param validation_proportion Proportion of the training samples that will be used to create the validation set, if required.
-#' @param batch_size Batch size used during pretraining
-#' @param n_epochs Number of pretraining epochs
+#' @param batch_size Batch size used during pretraining.
+#' @param n_epochs Number of pretraining epochs.
+#' @param save_path Path where the pretrained model will be saved.
 #'
-#' @returns A pretrained RDS model
+#' @returns A pretrained .PT model.
 #' @export
 #'
 #' @examples
@@ -28,7 +29,7 @@ scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation 
   # Create training dataset and dataloader
   train_ds <- create_tensor_dataset(x_train)
 
-  train_dl <- dataloader(train_ds,
+  train_dl <- torch::dataloader(train_ds,
                          batch_size = batch_size,
                          shuffle = TRUE)
 
@@ -38,7 +39,7 @@ scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation 
   if(create_validation) {
     val_ds <- create_tensor_dataset(x_val)
 
-    val_dl <- dataloader(val_ds,
+    val_dl <- torch::dataloader(val_ds,
                          batch_size = batch_size,
                          shuffle=FALSE)
   }
@@ -68,12 +69,22 @@ scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation 
 
 
   # Save trained model AND the recipe required to apply the same preprocessing to the test set
-  model_bundle <- list(
-    fitted_model = fitted,
-    recipe = recipe
+
+  encoder_weights <- fitted$model$main_encoder$state_dict()
+
+  hparams <- list(
+    in_dim = dim(x_train)[2],
+    hidden_dim = 256,
+    num_hidden = 4,
+    dropout = 0.0
   )
 
-  class(model_bundle) <- c("scarf_bundle", "list")
+  model_bundle <- list(
+    encoder_state_dict = encoder_weights,
+    encoder_hparams = hparams,
+    recipe = serialize(recipe, NULL),
+    bundle_type = "scarf_bundle"
+  )
 
   torch::torch_save(model_bundle, path = save_path)
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/read_data.R
 \name{prepare_scarf_data}
 \alias{prepare_scarf_data}
-\title{Title}
+\title{Prepare data for SCARF pretraining}
 \usage{
 prepare_scarf_data(
   dataframe_train,
@@ -14,22 +14,15 @@ prepare_scarf_data(
 \arguments{
 \item{dataframe_train}{Train dataframe}
 
-\item{exclude_columns}{Columns that the pretraining model should avoid (i.e target columns)}
+\item{exclude_columns}{Columns that the pretraining model should avoid (i.e target or ID columns)}
 
 \item{create_validation}{Indicate whether a validation set should be created}
 
 \item{validation_proportion}{Proportion of the training samples that will be used to create the validation set, if required.}
 }
 \value{
-Preprocessed train dataset (and validation set if required) and the recipe used for preprocessing
+Preprocessed train dataset (and validation set if required) and the recipes::recipe used for preprocessing
 }
 \description{
-Title
-}
-\examples{
-data(iris)
-
-data_ready <- prepare_scarf_data(dataframe_train = iris, exclude_columns = "Species", create_validation = TRUE)
-
-dim(data_ready$train_set)
+Prepare data for SCARF pretraining
 }

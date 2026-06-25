@@ -8,10 +8,6 @@
 #' @param dropout Dropout probability.
 #'
 #' @return A 'torch::nn_module' representing the encoder.
-#' @export
-#'
-#' @examples
-#' new_model <- scarf_encoder(100, 256, 4, 0.5)
 scarf_encoder <- torch::nn_module(
 
   name = "Scarf encoder",

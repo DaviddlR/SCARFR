@@ -3,10 +3,6 @@
 #' @param temperature Controls how sharply the model discriminates between hard and easy negative examples
 #'
 #' @returns A 'torch::nn_module' representing the nt_xent_loss function.
-#' @export
-#'
-#' @examples
-#' loss <- nt_xent_loss(temperature = 0.6)
 nt_xent_loss <- torch::nn_module(
 
   name = "nt_xent_loss",

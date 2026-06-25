@@ -11,8 +11,6 @@
 #' @param exclude_columns Columns that the pretraining model should avoid (i.e target or ID columns)
 #'
 #' @returns A torch::matrix representing the dataframe ready for feature extraction
-#'
-#' @examples
 prepare_scarf_data_for_feature_extraction = function(dataframe, trained_recipe, exclude_columns = NULL) {
   df_extract <- as.data.frame(dataframe)
 
@@ -44,13 +42,13 @@ prepare_scarf_data_for_feature_extraction = function(dataframe, trained_recipe, 
 #' @param validation_proportion Proportion of the training samples that will be used to create the validation set, if required.
 #'
 #' @returns Preprocessed train dataset (and validation set if required) and the recipes::recipe used for preprocessing
-#'
-#' @examples
-#' data(iris)
-#'
-#' data_ready <- prepare_scarf_data(dataframe_train = iris, exclude_columns = "Species", create_validation = TRUE)
-#'
-#' dim(data_ready$train_set)
+#
+# @examples
+# data(iris)
+#
+# data_ready <- prepare_scarf_data(dataframe_train = iris, exclude_columns = "Species", create_validation = TRUE)
+#
+# dim(data_ready$train_set)
 prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_validation = FALSE, validation_proportion = 0.1) {
 
   df_train_data <- as.data.frame(dataframe_train)
@@ -122,21 +120,20 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
 #' @param filename_test Path to the testing file
 #'
 #' @returns An object type 'list' with training, validation and testing (data and labels) subsets
-#' @export
-#'
-#' @examples
-#' train_path <- system.file("extdata", "UNSW_NB15_training-set.parquet", package = "scaRf")
-#' test_path <- system.file("extdata", "UNSW_NB15_testing-set.parquet", package = "scaRf")
-#' if (train_path != "" && test_path != "") {
-#'   datasets <- read_parquet_data(train_path, test_path)
-#'
-#'   train_ds <- datasets$train_set
-#'   train_label <- datasets$train_label
-#'   validation_ds <- datasets$train_set
-#'   validation_label <- datasets$validation_label
-#'   test_ds <- datasets$train_set
-#'   test_label <- datasets$test_label
-#' }
+#
+# @examples
+# train_path <- system.file("extdata", "UNSW_NB15_training-set.parquet", package = "scaRf")
+# test_path <- system.file("extdata", "UNSW_NB15_testing-set.parquet", package = "scaRf")
+# if (train_path != "" && test_path != "") {
+#   datasets <- read_parquet_data(train_path, test_path)
+#
+#   train_ds <- datasets$train_set
+#   train_label <- datasets$train_label
+#   validation_ds <- datasets$train_set
+#   validation_label <- datasets$validation_label
+#   test_ds <- datasets$train_set
+#   test_label <- datasets$test_label
+# }
 read_parquet_data = function(filename_train, filename_test){
 
   # TODO: modificar esto para que le llegue un dataframe, columna target y columnas a excluir

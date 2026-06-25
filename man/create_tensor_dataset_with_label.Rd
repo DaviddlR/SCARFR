@@ -17,13 +17,3 @@ A 'torch::dataset' that contains the data.
 \description{
 Creation of a tensor dataset.
 }
-\examples{
-X_fake <- matrix(runif(50*4), nrow=50, ncol=4)
-y_fake <- sample(0:1, 50, replace=TRUE)
-
-my_dataset <- create_tensor_dataset(X_fake, y_fake)
-
-first_item <- my_dataset$.getitem(1)
-print(first_item$x)
-print(first_item$y)
-}

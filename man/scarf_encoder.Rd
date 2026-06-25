@@ -21,6 +21,3 @@ A 'torch::nn_module' representing the encoder.
 \description{
 Basic encoder module.
 }
-\examples{
-new_model <- scarf_encoder(100, 256, 4, 0.5)
-}
