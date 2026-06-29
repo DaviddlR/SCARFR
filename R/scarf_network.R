@@ -1,5 +1,46 @@
 
 
+
+
+#' Classification Head torch module.
+#'
+#' @param input_dim Input dimension
+#' @param n_classes Number of classes to classify
+#' @param dropout Dropout layer parameter. Default: 0.0 (without dropout)
+#'
+#' @returns A 'torch::nn_module' representing the classification head.
+classifier_network <- torch::nn_module(
+  name = "Small MLP",
+
+  # Init
+
+  initialize = function(input_dim, n_classes, dropout = 0.0) {
+    self$in_dim = input_dim
+    self$dropout = dropout
+
+
+    self$classifier <- torch::nn_sequential(
+      torch::nn_linear(input_dim, 256),
+      torch::nn_batch_norm1d(256),
+      torch::nn_relu(inplace=TRUE),
+      torch::nn_dropout(self$dropout),
+
+      torch::nn_linear(256, n_classes)
+    )
+  },
+
+  # Forward
+  forward = function(x) {
+    self$classifier(x)
+  }
+)
+
+
+
+
+
+
+
 #' Basic encoder module.
 #'
 #' @param in_dim Number of input features.
@@ -56,7 +97,6 @@ scarf_encoder <- torch::nn_module(
   }
 
 )
-
 
 
 SCARF_wrapper <- torch::nn_module(  # Something like SCARF lightning but we do not define train_step here

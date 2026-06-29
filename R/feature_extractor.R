@@ -13,39 +13,18 @@
 #'
 #' @examples
 #' a <- 1
-scarf_feature_extractor = function(dataframe, pretrained_model_path, exclude_columns = NULL, batch_size = 32) {
+scarf_feature_extractor = function(dataframe, pretrained_model_path, exclude_columns = NULL, want_labels = FALSE, label_column = NULL, batch_size = 32) {
 
-  # Load pretrained model and recipe
-  model_bundle <- torch::torch_load(pretrained_model_path)
+  # Extract pretrained model and recipe
+  bundle <- load_scarf_bundle(pretrained_model_path)
 
-  # Validate input
-  if(is.list(model_bundle) && identical(model_bundle$bundle_type, "scarf_bundle")) {
-
-    # Load encoder hyperparameters
-    hparams <- model_bundle$encoder_hparams
-
-    print(hparams)
-
-    # Create a new encoder
-    fitted_encoder <- scarf_encoder(
-      in_dim = hparams$in_dim,
-      hidden_dim = hparams$hidden_dim,
-      num_hidden = hparams$num_hidden,
-      dropout = hparams$dropout
-    )
-
-    # Load trained weights
-    fitted_encoder$load_state_dict(model_bundle$encoder_state_dict)
-
-    # Load recipe
-    trained_recipe <- unserialize(model_bundle$recipe)
-
-  } else {
-    stop("The input is not a scarf_bundle. Please, train the model using scarf_fit() and set the pretrained_model_path to the path in which the trained model is stored")
-  }
+  fitted_encoder <- bundle$encoder
+  trained_recipe <- bundle$recipe
 
   # Prepare data
-  dataframe_cleaned <- prepare_scarf_data_for_feature_extraction(dataframe, trained_recipe, exclude_columns)
+  dataframe_cleaned_xy <- prepare_scarf_data_for_feature_extraction(dataframe, trained_recipe, exclude_columns, want_labels = want_labels, label_column = label_column)
+  dataframe_cleaned <- dataframe_cleaned_xy$x
+  dataframe_labels <- dataframe_cleaned_xy$y
 
   dataset_ready <- create_tensor_dataset(dataframe_cleaned)
 
@@ -82,9 +61,14 @@ scarf_feature_extractor = function(dataframe, pretrained_model_path, exclude_col
   # Convert to matrix
   all_features <- as.matrix(all_features)
 
+  print("Extracted features: ")
   print(dim(all_features))
+  print(length(dataframe_labels))
 
-  return(all_features)
+  return(list(
+    features = all_features,
+    features_labels = dataframe_labels
+    ))
 
 
 }

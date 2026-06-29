@@ -7,7 +7,9 @@
 prepare_scarf_data_for_feature_extraction(
   dataframe,
   trained_recipe,
-  exclude_columns = NULL
+  exclude_columns = NULL,
+  want_labels = FALSE,
+  label_column = NULL
 )
 }
 \arguments{

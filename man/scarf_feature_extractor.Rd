@@ -8,6 +8,8 @@ scarf_feature_extractor(
   dataframe,
   pretrained_model_path,
   exclude_columns = NULL,
+  want_labels = FALSE,
+  label_column = NULL,
   batch_size = 32
 )
 }

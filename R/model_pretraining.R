@@ -92,6 +92,8 @@ scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation 
 
 
 
+
+
   #luz::luz_save(fitted, "scarf_trained.rds")
 
 

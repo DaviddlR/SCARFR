@@ -11,8 +11,15 @@
 #' @param exclude_columns Columns that the pretraining model should avoid (i.e target or ID columns)
 #'
 #' @returns A torch::matrix representing the dataframe ready for feature extraction
-prepare_scarf_data_for_feature_extraction = function(dataframe, trained_recipe, exclude_columns = NULL) {
+prepare_scarf_data_for_feature_extraction = function(dataframe, trained_recipe, exclude_columns = NULL, want_labels = FALSE, label_column = NULL) {
   df_extract <- as.data.frame(dataframe)
+
+  # Get label if needed
+  label_data = NULL
+
+  if (want_labels) {
+    label_data <- df_extract[[label_column]]
+  }
 
   # Remove unneeded columns
   x_extract <- df_extract[, !(names(df_extract) %in% exclude_columns), drop=FALSE]
@@ -23,8 +30,12 @@ prepare_scarf_data_for_feature_extraction = function(dataframe, trained_recipe, 
 
   print("Dataset ready for feature extraction: ")
   print(dim(x_extract_mat))
+  print(length(label_data))
 
-  return (x_extract_mat)
+  return (list(
+    x = x_extract_mat,
+    y = label_data
+    ))
 }
 
 
@@ -103,10 +114,13 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
     print(dim(x_val_mat))
   }
 
+  # Optimize recipe by removing unnecessary data (butcher package)
+  optimized_recipe <- butcher::butcher(trained_recipe)
+
 
   return (list("train_set" = x_train_mat,
                "val_set" = x_val_mat,
-               "recipe" = trained_recipe))
+               "recipe" = optimized_recipe))
 
 }
 
