@@ -11,13 +11,13 @@ scarf_fit(
   validation_proportion = 0.1,
   batch_size = 256,
   n_epochs = 1,
-  save_path = "trained_luz.pt"
+  save_path = "SCARF.pt"
 )
 }
 \arguments{
-\item{dataframe_train}{Train dataframe}
+\item{dataframe_train}{Train dataframe in which the model will be trained}
 
-\item{exclude_columns}{Columns that the pretraining model should avoid (i.e target or ID columns).}
+\item{exclude_columns}{Columns that the model should ignore during pretraining (i.e target or ID columns).}
 
 \item{create_validation}{Indicate whether a validation set should be created.}
 
@@ -30,7 +30,7 @@ scarf_fit(
 \item{save_path}{Path where the pretrained model will be saved.}
 }
 \value{
-A pretrained .PT model.
+A pretrained .PT SCARF model.
 }
 \description{
 SCARF pretraining

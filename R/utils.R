@@ -9,7 +9,7 @@
 load_scarf_bundle = function(bundle_path) {
 
   # Load pretrained model and recipe
-  model_bundle <- torch::torch_load(bundle_path)
+  model_bundle <- torch::torch_load(paste(bundle_path, ".pt", sep=""))
 
   # Validate input
   if(is.list(model_bundle) && identical(model_bundle$bundle_type, "scarf_bundle")) {
@@ -51,9 +51,6 @@ load_classifier_bundle = function(bundle_path) {
   # Load pretrained model and recipe
   model_bundle <- torch::torch_load(bundle_path)
 
-  print(bundle_path)
-  print(model_bundle)
-
   # Validate input
   if(is.list(model_bundle) && identical(model_bundle$bundle_type, "classifier_bundle")) {
 
@@ -70,9 +67,8 @@ load_classifier_bundle = function(bundle_path) {
     # Load weights
     classifier_net$load_state_dict(classifier_weights)
 
-    # Load levels
 
-    # Load recipe
+    # Load levels
     trained_levels <- unserialize(model_bundle$levels)
 
     return(list(

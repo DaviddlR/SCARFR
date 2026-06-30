@@ -4,20 +4,20 @@
 
 #' SCARF pretraining
 #'
-#' @param dataframe_train Train dataframe
-#' @param exclude_columns Columns that the pretraining model should avoid (i.e target or ID columns).
+#' @param dataframe_train Train dataframe in which the model will be trained
+#' @param exclude_columns Columns that the model should ignore during pretraining (i.e target or ID columns).
 #' @param create_validation Indicate whether a validation set should be created.
 #' @param validation_proportion Proportion of the training samples that will be used to create the validation set, if required.
 #' @param batch_size Batch size used during pretraining.
 #' @param n_epochs Number of pretraining epochs.
 #' @param save_path Path where the pretrained model will be saved.
 #'
-#' @returns A pretrained .PT model.
+#' @returns A pretrained .PT SCARF model.
 #' @export
 #'
 #' @examples
 #' a <- 1
-scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation = FALSE, validation_proportion = 0.1, batch_size = 256, n_epochs = 1, save_path = "trained_luz.pt") {
+scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation = FALSE, validation_proportion = 0.1, batch_size = 256, n_epochs = 1, save_path = "SCARF.pt") {
 
   # Load and preprocess data
   preprocessed_datasets <- prepare_scarf_data(dataframe_train, exclude_columns = exclude_columns, create_validation = create_validation, validation_proportion = validation_proportion)

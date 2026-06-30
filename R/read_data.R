@@ -21,7 +21,7 @@ prepare_scarf_data_for_feature_extraction = function(dataframe, trained_recipe, 
     label_data <- df_extract[[label_column]]
   }
 
-  # Remove unneeded columns
+  # Remove unnecessary columns
   x_extract <- df_extract[, !(names(df_extract) %in% exclude_columns), drop=FALSE]
 
   # Apply preprocessing to the dataset using the trained recipe and create matrix

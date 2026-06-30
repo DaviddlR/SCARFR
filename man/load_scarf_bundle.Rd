@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{load_scarf_bundle}
 \alias{load_scarf_bundle}
-\title{Title}
+\title{Function to read and check a SCARF bundle}
 \usage{
 load_scarf_bundle(bundle_path)
 }
@@ -13,5 +13,5 @@ load_scarf_bundle(bundle_path)
 Pretrained model's weights and trained recipe for preprocessing
 }
 \description{
-Title
+Function to read and check a SCARF bundle
 }
