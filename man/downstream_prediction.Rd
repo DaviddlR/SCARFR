@@ -6,28 +6,28 @@
 \usage{
 downstream_prediction(
   df_test,
-  target_column,
-  exclude_columns,
   pretrained_model_path,
+  label_column,
   classification_model_path,
+  exclude_columns = NULL,
   return_classification_report = FALSE
 )
 }
 \arguments{
-\item{df_test}{a}
+\item{df_test}{Test dataframe in which the classification model will predict each sample.}
 
-\item{target_column}{a}
+\item{pretrained_model_path}{Path to the pretrained model.}
 
-\item{exclude_columns}{a}
+\item{classification_model_path}{Path to the classification model.}
 
-\item{pretrained_model_path}{a}
+\item{exclude_columns}{Columns that the classification model should ignore during training and inference (i.e target or ID columns). Default: NULL.}
 
-\item{classification_model_path}{a}
+\item{return_classification_report}{Indicate whether the user want to produce a classification report (TRUE) or just the predictions (FALSE). Default: FALSE.}
 
-\item{return_classification_report}{a}
+\item{target_column}{Column of the dataframe that store the sample's label.}
 }
 \value{
-a
+A "list" with the predicted label and probability score of each sample.
 }
 \description{
 Title

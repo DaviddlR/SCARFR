@@ -2,7 +2,7 @@
 % Please edit documentation in R/evaluate_representations.R
 \name{train_classifier_on_representations}
 \alias{train_classifier_on_representations}
-\title{Train a classifier on top of the latent representations created by a pretrained model}
+\title{Train a classifier on top of the latent representations created by a pretrained model.}
 \usage{
 train_classifier_on_representations(
   df_train,
@@ -17,21 +17,21 @@ train_classifier_on_representations(
 )
 }
 \arguments{
-\item{df_train}{Train dataframe in which the classification model will be trained}
+\item{df_train}{Train dataframe in which the classification model will be trained.}
 
-\item{pretrained_model_path}{Path to the pretrained model}
+\item{pretrained_model_path}{Path to the pretrained model.}
 
-\item{label_column}{Column of the dataframe that store the sample's label}
+\item{label_column}{Column of the dataframe that store the sample's label.}
 
-\item{num_classes}{Number of possible classes}
+\item{num_classes}{Number of possible classes.}
 
-\item{exclude_columns}{Columns that the model should ignore during training (i.e target or ID columns). Default: NULL}
+\item{exclude_columns}{Columns that the classification model should ignore during training and inference (i.e target or ID columns). Default: NULL.}
 
-\item{classification_model_type}{Type of classifier to be created and trained. Options: "MLP". Default: "MLP"}
+\item{classification_model_type}{Type of classifier to be created and trained. Options: "MLP". Default: "MLP".}
 
-\item{dropout}{If classification_model_type = "MLP", this parameter sets the dropout probability. Default: 0.2}
+\item{dropout}{If classification_model_type = "MLP", this parameter sets the dropout probability. Default: 0.2.}
 
-\item{doitsmall}{Specify if the training set should be reduced for experimental purposes (i.e. what happen if we only use 1% of training samples?). Default: FALSE}
+\item{doitsmall}{Specify if the training set should be reduced for experimental purposes (i.e. what happen if we only use 1% of training samples?). Default: FALSE.}
 
 \item{save_path}{Path where the classification model will be saved.}
 }
@@ -39,7 +39,7 @@ train_classifier_on_representations(
 A pretrained .PT classifier model
 }
 \description{
-Train a classifier on top of the latent representations created by a pretrained model
+Train a classifier on top of the latent representations created by a pretrained model.
 }
 \examples{
 a <- 1

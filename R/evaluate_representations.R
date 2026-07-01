@@ -2,16 +2,16 @@
 
 # TODO: si se incluyen más clasificadores, cómo guardarlos?
 
-#' Train a classifier on top of the latent representations created by a pretrained model
+#' Train a classifier on top of the latent representations created by a pretrained model.
 #'
-#' @param df_train Train dataframe in which the classification model will be trained
-#' @param pretrained_model_path Path to the pretrained model
-#' @param label_column Column of the dataframe that store the sample's label
-#' @param num_classes Number of possible classes
-#' @param exclude_columns Columns that the model should ignore during training (i.e target or ID columns). Default: NULL
-#' @param classification_model_type Type of classifier to be created and trained. Options: "MLP". Default: "MLP"
-#' @param dropout If classification_model_type = "MLP", this parameter sets the dropout probability. Default: 0.2
-#' @param doitsmall Specify if the training set should be reduced for experimental purposes (i.e. what happen if we only use 1% of training samples?). Default: FALSE
+#' @param df_train Train dataframe in which the classification model will be trained.
+#' @param pretrained_model_path Path to the pretrained model.
+#' @param label_column Column of the dataframe that store the sample's label.
+#' @param num_classes Number of possible classes.
+#' @param exclude_columns Columns that the classification model should ignore during training and inference (i.e target or ID columns). Default: NULL.
+#' @param classification_model_type Type of classifier to be created and trained. Options: "MLP". Default: "MLP".
+#' @param dropout If classification_model_type = "MLP", this parameter sets the dropout probability. Default: 0.2.
+#' @param doitsmall Specify if the training set should be reduced for experimental purposes (i.e. what happen if we only use 1% of training samples?). Default: FALSE.
 #' @param save_path Path where the classification model will be saved.
 #'
 #' @returns A pretrained .PT classifier model
@@ -126,19 +126,19 @@ train_classifier_on_representations = function(df_train, pretrained_model_path, 
 # Una vez entrenado el clasificador, evaluarlo sobre un conjunto de test concreto
 #' Title
 #'
-#' @param df_test a
-#' @param target_column  a
-#' @param exclude_columns a
-#' @param pretrained_model_path a
-#' @param classification_model_path a
-#' @param return_classification_report a
+#' @param df_test Test dataframe in which the classification model will predict each sample.
+#' @param pretrained_model_path Path to the pretrained model.
+#' @param target_column Column of the dataframe that store the sample's label.
+#' @param classification_model_path Path to the classification model.
+#' @param exclude_columns Columns that the classification model should ignore during training and inference (i.e target or ID columns). Default: NULL.
+#' @param return_classification_report Indicate whether the user want to produce a classification report (TRUE) or just the predictions (FALSE). Default: FALSE.
 #'
-#' @returns a
+#' @returns A "list" with the predicted label and probability score of each sample.
 #' @export
 #'
 #' @examples
 #' a <- 1
-downstream_prediction = function(df_test, target_column, exclude_columns, pretrained_model_path, classification_model_path, return_classification_report = FALSE) {
+downstream_prediction = function(df_test, pretrained_model_path, label_column, classification_model_path, exclude_columns = NULL, return_classification_report = FALSE) {
 
   # Load model
   fitted_classifier_bundle <- load_classifier_bundle(paste(classification_model_path, ".pt", sep=""))
@@ -150,7 +150,7 @@ downstream_prediction = function(df_test, target_column, exclude_columns, pretra
                                                      pretrained_model_path = pretrained_model_path,
                                                      exclude_columns = exclude_columns,
                                                      want_labels = TRUE,
-                                                     label_column = target_column,
+                                                     label_column = label_column,
                                                      batch_size = 32)
 
   features_test <- extracted_features_test$features
