@@ -2,7 +2,7 @@
 % Please edit documentation in R/feature_extractor.R
 \name{scarf_feature_extractor}
 \alias{scarf_feature_extractor}
-\title{Title}
+\title{Extract latent features from a given dataset using a pretrained SCARF model.}
 \usage{
 scarf_feature_extractor(
   dataframe,
@@ -14,20 +14,63 @@ scarf_feature_extractor(
 )
 }
 \arguments{
-\item{dataframe}{Dataframe to process and extract features}
+\item{dataframe}{A \code{data.frame} from which to extract features.}
 
-\item{pretrained_model_path}{Path to the pretrained model used to extract representations}
+\item{pretrained_model_path}{\code{String}. Path to the pretrained SCARF model (.pt file).}
 
-\item{exclude_columns}{Columns that the pretraining model should avoid (i.e target or ID columns). Default = NULL}
+\item{exclude_columns}{A \code{string} of columns that the model should ignore during inference (i.e target or ID columns). Default is \code{NULL}.}
 
-\item{batch_size}{Batch size used during feature extraction. Default = 32}
+\item{want_labels}{\code{Boolean}. If \code{TRUE}, the function extracts and returns the target labels alongside features. Default is \code{FALSE}.}
+
+\item{label_column}{\code{String}. Name of the column containing the labels. Required if \code{want_labels = TRUE}. Default is \code{NULL}.}
+
+\item{batch_size}{batch_size \code{integer}. Number of samples per batch during feature extraction. Default is \code{32}.}
 }
 \value{
-TODO
+A \code{list} containing two elements:
+\itemize{
+  \item \code{features}: A numeric \code{matrix} of the extracted latent representations.
+  \item \code{features_labels}: A vector with the labels of each sample (or \code{NULL} if \code{want_labels = FALSE}).
+}
 }
 \description{
-Title
+Extract latent features from a given dataset using a pretrained SCARF model.
 }
 \examples{
-a <- 1
+
+\donttest{
+# Create dummy dataset
+df_train <- data.frame(
+  user_id = 1:120,
+  age = rnorm(120, mean = 35, sd = 10),
+  income = runif(120, 15000, 75000),
+  risk_profile = factor(sample(c("Low", "Medium", "High"), 120, replace = TRUE)),
+  cancellation = sample(0:1, 120, replace = TRUE)
+)
+
+tmp_path <- tempfile(fileext = ".pt")
+
+# Fit SCARF one epoch
+scarf_fit(
+  dataframe_train = df_train,
+  exclude_columns = c("user_id", "cancellation"),
+  n_epochs = 1,
+  save_path = tmp_path
+)
+
+# Extract features
+extracted <- scarf_feature_extractor(
+  dataframe = df_train,
+  pretrained_model_path = tmp_path,
+  exclude_columns = c("user_id", "cancellation"),
+  want_labels = TRUE,
+  label_column = "cancellation"
+)
+
+print(dim(extracted$features))
+
+# Remove temp file
+if (file.exists(tmp_path)) file.remove(tmp_path)
+
+}
 }

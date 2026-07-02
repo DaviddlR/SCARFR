@@ -17,30 +17,63 @@ train_classifier_on_representations(
 )
 }
 \arguments{
-\item{df_train}{Train dataframe in which the classification model will be trained.}
+\item{df_train}{A \code{data.frame} containing the training samples and labels.}
 
-\item{pretrained_model_path}{Path to the pretrained model.}
+\item{pretrained_model_path}{\code{String}. Path to the pretrained SCARF model (.pt file).}
 
-\item{label_column}{Column of the dataframe that store the sample's label.}
+\item{label_column}{\code{String}. Name of the column containing the labels. Required if \code{want_labels = TRUE}. Default is \code{NULL}.}
 
-\item{num_classes}{Number of possible classes.}
+\item{num_classes}{\code{Integer}. Total number of unique classes in the target column.}
 
-\item{exclude_columns}{Columns that the classification model should ignore during training and inference (i.e target or ID columns). Default: NULL.}
+\item{exclude_columns}{A \code{string} of columns that the models should ignore (i.e target or ID columns). Default is \code{NULL}.}
 
-\item{classification_model_type}{Type of classifier to be created and trained. Options: "MLP". Default: "MLP".}
+\item{classification_model_type}{\code{String}. Type of architecture to train. Currently only \code{"MLP"} is supported.}
 
-\item{dropout}{If classification_model_type = "MLP", this parameter sets the dropout probability. Default: 0.2.}
+\item{dropout}{\code{Numeric}. Dropout probability for the classification layers. Default is \code{0.2}.}
 
-\item{doitsmall}{Specify if the training set should be reduced for experimental purposes (i.e. what happen if we only use 1% of training samples?). Default: FALSE.}
+\item{doitsmall}{\code{Boolean}. If \code{TRUE}, sub-samples the training set to 1\% for quick experimentation. Default is \code{FALSE}.}
 
-\item{save_path}{Path where the classification model will be saved.}
+\item{save_path}{\code{String}. Path where the trained classifier bundle (.pt) will be saved. Extension ('.pt') should not be included. Default is \code{"classifier"}, which saves a 'classifier.pt' file in the current directory.}
 }
 \value{
-A pretrained .PT classifier model
+Invisible \code{NULL}. Saves a serialized classifier bundle containing the network weights, hyperparameters, and the target factor levels to disk.
 }
 \description{
 Train a classifier on top of the latent representations created by a pretrained model.
 }
 \examples{
-a <- 1
+\donttest{
+
+if (torch::torch_is_installed()) {
+  df_train <- data.frame(
+    id = 1:100,
+    v1 = rnorm(100),
+    v2 = factor(sample(c("A", "B"), 100, replace = TRUE)),
+    target = sample(c("Class1", "Class2"), 100, replace = TRUE)
+  )
+
+  tmp_scarf <- tempfile(fileext = ".pt")
+  tmp_class <- tempfile()
+
+  scarf_fit(
+    df_train,
+    exclude_columns = c("id", "target"),
+    n_epochs = 1,
+    save_path = tmp_scarf
+  )
+
+  # Train classifier
+  train_classifier_on_representations(
+    df_train = df_train,
+    pretrained_model_path = tmp_scarf,
+    label_column = "target",
+    num_classes = 2,
+    exclude_columns = "id",
+    save_path = tmp_class
+  )
+
+  if (file.exists(tmp_scarf)) file.remove(tmp_scarf)
+  if (file.exists(paste0(tmp_class, ".pt"))) file.remove(paste0(tmp_class, ".pt"))
+}
+}
 }

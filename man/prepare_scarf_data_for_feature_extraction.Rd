@@ -17,7 +17,11 @@ prepare_scarf_data_for_feature_extraction(
 
 \item{trained_recipe}{Trained recipes::recipe for preprocessing}
 
-\item{exclude_columns}{Columns that the pretraining model should avoid (i.e target or ID columns)}
+\item{exclude_columns}{A \code{string} of columns that the model should ignore (i.e target or ID columns). Default is \code{NULL}.}
+
+\item{want_labels}{\code{Boolean}. If \code{TRUE}, the function extracts and returns the target labels alongside features. Default is \code{FALSE}.}
+
+\item{label_column}{\code{String}. Name of the column containing the labels. Required if \code{want_labels = TRUE}. Default is \code{NULL}.}
 }
 \value{
 A torch::matrix representing the dataframe ready for feature extraction

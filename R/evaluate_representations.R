@@ -4,21 +4,54 @@
 
 #' Train a classifier on top of the latent representations created by a pretrained model.
 #'
-#' @param df_train Train dataframe in which the classification model will be trained.
-#' @param pretrained_model_path Path to the pretrained model.
-#' @param label_column Column of the dataframe that store the sample's label.
-#' @param num_classes Number of possible classes.
-#' @param exclude_columns Columns that the classification model should ignore during training and inference (i.e target or ID columns). Default: NULL.
-#' @param classification_model_type Type of classifier to be created and trained. Options: "MLP". Default: "MLP".
-#' @param dropout If classification_model_type = "MLP", this parameter sets the dropout probability. Default: 0.2.
-#' @param doitsmall Specify if the training set should be reduced for experimental purposes (i.e. what happen if we only use 1% of training samples?). Default: FALSE.
-#' @param save_path Path where the classification model will be saved.
+#' @param df_train A \code{data.frame} containing the training samples and labels.
+#' @param pretrained_model_path \code{String}. Path to the pretrained SCARF model (.pt file).
+#' @param label_column \code{String}. Name of the column containing the labels. Required if \code{want_labels = TRUE}. Default is \code{NULL}.
+#' @param num_classes \code{Integer}. Total number of unique classes in the target column.
+#' @param exclude_columns A \code{string} of columns that the models should ignore (i.e target or ID columns). Default is \code{NULL}.
+#' @param classification_model_type \code{String}. Type of architecture to train. Currently only \code{"MLP"} is supported.
+#' @param dropout \code{Numeric}. Dropout probability for the classification layers. Default is \code{0.2}.
+#' @param doitsmall \code{Boolean}. If \code{TRUE}, sub-samples the training set to 1\% for quick experimentation. Default is \code{FALSE}.
+#' @param save_path \code{String}. Path where the trained classifier bundle (.pt) will be saved. Extension ('.pt') should not be included. Default is \code{"classifier"}, which saves a 'classifier.pt' file in the current directory.
 #'
-#' @returns A pretrained .PT classifier model
+#' @returns Invisible \code{NULL}. Saves a serialized classifier bundle containing the network weights, hyperparameters, and the target factor levels to disk.
 #' @export
 #'
 #' @examples
-#' a <- 1
+#' \donttest{
+#'
+#' if (torch::torch_is_installed()) {
+#'   df_train <- data.frame(
+#'     id = 1:100,
+#'     v1 = rnorm(100),
+#'     v2 = factor(sample(c("A", "B"), 100, replace = TRUE)),
+#'     target = sample(c("Class1", "Class2"), 100, replace = TRUE)
+#'   )
+#'
+#'   tmp_scarf <- tempfile(fileext = ".pt")
+#'   tmp_class <- tempfile()
+#'
+#'   scarf_fit(
+#'     df_train,
+#'     exclude_columns = c("id", "target"),
+#'     n_epochs = 1,
+#'     save_path = tmp_scarf
+#'   )
+#'
+#'   # Train classifier
+#'   train_classifier_on_representations(
+#'     df_train = df_train,
+#'     pretrained_model_path = tmp_scarf,
+#'     label_column = "target",
+#'     num_classes = 2,
+#'     exclude_columns = "id",
+#'     save_path = tmp_class
+#'   )
+#'
+#'   if (file.exists(tmp_scarf)) file.remove(tmp_scarf)
+#'   if (file.exists(paste0(tmp_class, ".pt"))) file.remove(paste0(tmp_class, ".pt"))
+#' }
+#' }
 train_classifier_on_representations = function(df_train, pretrained_model_path, label_column, num_classes, exclude_columns = NULL, classification_model_type = "MLP", dropout = 0.2, doitsmall = FALSE, save_path = "classifier") {
 
   if(doitsmall) {
@@ -27,7 +60,7 @@ train_classifier_on_representations = function(df_train, pretrained_model_path, 
     label_proportion <- 0.01
 
     df_train <- df_train |>
-      dplyr::group_by(attack_cat) |>
+      dplyr::group_by(.data[[label_column]]) |>
       dplyr::sample_frac(label_proportion) |>
       dplyr::ungroup()
   }
@@ -123,21 +156,76 @@ train_classifier_on_representations = function(df_train, pretrained_model_path, 
 
 
 
-# Una vez entrenado el clasificador, evaluarlo sobre un conjunto de test concreto
-#' Title
+#' Obtain predictions of a classifier trained on top of latent representations
 #'
-#' @param df_test Test dataframe in which the classification model will predict each sample.
-#' @param pretrained_model_path Path to the pretrained model.
-#' @param target_column Column of the dataframe that store the sample's label.
-#' @param classification_model_path Path to the classification model.
-#' @param exclude_columns Columns that the classification model should ignore during training and inference (i.e target or ID columns). Default: NULL.
-#' @param return_classification_report Indicate whether the user want to produce a classification report (TRUE) or just the predictions (FALSE). Default: FALSE.
+#' @param df_test A \code{data.frame} representing the test/evaluation set.
+#' @param pretrained_model_path \code{String}. Path to the pretrained SCARF bundle.
+#' @param label_column \code{String}. Name of the column containing the true labels (used for mapping or reporting).
+#' @param classification_model_path \code{String}. Path prefix to the trained classifier bundle (excluding the ".pt" extension).
+#' @param exclude_columns A \code{string} of columns that the models should ignore (i.e target or ID columns). Default is \code{NULL}.
+#' @param return_classification_report \code{Boolean}. If \code{TRUE}, prints a confusion matrix and the global accuracy to the console. Default is \code{FALSE}.
 #'
-#' @returns A "list" with the predicted label and probability score of each sample.
+#' @returns A \code{list} containing:
+#' \itemize{
+#'   \item \code{predictions}: A String vector with the predicted class names for each sample.
+#'   \item \code{probabilities}: An array containing the softmax probability scores for each class.
+#' }
+#'
 #' @export
 #'
 #' @examples
-#' a <- 1
+#' \donttest{
+#'
+#' if (torch::torch_is_installed()) {
+#'   df_train <- data.frame(
+#'     id = 1:100,
+#'     v1 = rnorm(100),
+#'     v2 = factor(sample(c("A", "B"), 100, replace = TRUE)),
+#'     target = sample(c("Class1", "Class2"), 100, replace = TRUE)
+#'   )
+#'
+#'   df_test <- data.frame(
+#'     id = 1:20,
+#'     v1 = rnorm(100),
+#'     v2 = factor(sample(c("A", "B"), 100, replace = TRUE)),
+#'     target = sample(c("Class1", "Class2"), 100, replace = TRUE)
+#'   )
+#'
+#'   tmp_scarf <- tempfile(fileext = ".pt")
+#'   tmp_class <- tempfile()
+#'
+#'   # SCARF pretraining and train classifier
+#'   scarf_fit(
+#'     df_train,
+#'     exclude_columns = c("id", "target"),
+#'     n_epochs = 1,
+#'     save_path = tmp_scarf
+#'   )
+#'
+#'   train_classifier_on_representations(
+#'     df_train,
+#'     tmp_scarf,
+#'     "target",
+#'     num_classes = 2,
+#'     exclude_columns = c("id", "target"),
+#'     save_path = tmp_class
+#'   )
+#'
+#'   results <- downstream_prediction(
+#'     df_test = df_test,
+#'     pretrained_model_path = tmp_scarf,
+#'     label_column = "target",
+#'     classification_model_path = tmp_class,
+#'     exclude_columns = c("id", "target"),
+#'     return_classification_report = TRUE
+#'   )
+#'
+#'   if (file.exists(tmp_scarf)) file.remove(tmp_scarf)
+#'   if (file.exists(paste0(tmp_class, ".pt"))) file.remove(paste0(tmp_class, ".pt"))
+#' }
+#'
+#' }
+#'
 downstream_prediction = function(df_test, pretrained_model_path, label_column, classification_model_path, exclude_columns = NULL, return_classification_report = FALSE) {
 
   # Load model

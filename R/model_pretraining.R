@@ -2,22 +2,48 @@
 
 
 
-#' SCARF pretraining
+#' Trains a SCARF encoder using a contrastive loss objective. It prepares the data using a recipe, applies random feature corruption and fits the model.
 #'
-#' @param dataframe_train Train dataframe in which the model will be trained
-#' @param exclude_columns Columns that the model should ignore during pretraining (i.e target or ID columns).
-#' @param create_validation Indicate whether a validation set should be created.
-#' @param validation_proportion Proportion of the training samples that will be used to create the validation set, if required.
-#' @param batch_size Batch size used during pretraining.
-#' @param n_epochs Number of pretraining epochs.
-#' @param save_path Path where the pretrained model will be saved.
+#' @param dataframe_train A \code{data.frame} used to train de model.
+#' @param exclude_columns A \code{string} of columns that the model should ignore during pretraining (i.e target or ID columns). Default is \code{NULL}.
+#' @param create_validation \code{Boolean}. If \code{TRUE}, splits the training data to create a validation set. Default is \code{FALSE}.
+#' @param validation_proportion \code{Numeric}. Proportion of data (0 to 1) allocated for validation if \code{create_validation = TRUE}. Default is \code{0.1}.
+#' @param batch_size \code{Integer}. Number of samples per batch during training. Default is \code{256}.
+#' @param n_epochs \code{Integer}. Number of training epochs. Default is \code{150}.
+#' @param save_path \code{String}. Path where the pretrained bundle (.pt) will be saved. Extension ('.pt') should not be included. Default is \code{"SCARF"}, which saves a 'SCARF.pt' file in the current directory.
 #'
-#' @returns A pretrained .PT SCARF model.
+#' @returns Invisible \code{NULL}. The function saves a serialized list containing the encoder state dict, hyperparameters, and the preprocessing recipe to \code{save_path}.
 #' @export
 #'
 #' @examples
-#' a <- 1
-scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation = FALSE, validation_proportion = 0.1, batch_size = 256, n_epochs = 1, save_path = "SCARF.pt") {
+#' \donttest{
+#' if (torch::torch_is_installed()) {
+#'
+#'   # Create dummy dataset
+#'   df_train <- data.frame(
+#'     user_id = 1:120,
+#'     age = rnorm(120, mean = 35, sd = 10),
+#'     income = runif(120, 15000, 75000),
+#'     risk_profile = factor(sample(c("Low", "Medium", "High"), 120, replace = TRUE)),
+#'     cancellation = sample(0:1, 120, replace = TRUE)
+#'   )
+#'
+#'   tmp_path <- tempfile(fileext = ".pt")
+#'
+#'   # Fit SCARF one epoch
+#'   scarf_fit(
+#'     dataframe_train = df_train,
+#'     exclude_columns = c("user_id", "cancelation"),
+#'     n_epochs = 1,
+#'     save_path = tmp_path
+#'   )
+#'
+#'   # Remove temp file
+#'   if (file.exists(tmp_path)) file.remove(tmp_path)
+#' }
+#' }
+#'
+scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation = FALSE, validation_proportion = 0.1, batch_size = 256, n_epochs = 1, save_path = "SCARF") {
 
   # Load and preprocess data
   preprocessed_datasets <- prepare_scarf_data(dataframe_train, exclude_columns = exclude_columns, create_validation = create_validation, validation_proportion = validation_proportion)
@@ -86,7 +112,7 @@ scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation 
     bundle_type = "scarf_bundle"
   )
 
-  torch::torch_save(model_bundle, path = save_path)
+  torch::torch_save(model_bundle, path = paste0(save_path, ".pt"))
 
 
 

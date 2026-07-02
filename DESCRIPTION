@@ -1,6 +1,6 @@
 Package: scaRf
 Type: Package
-Title: Train and evaluate SCARF on a given dataset
+Title: Train, use and evaluate SCARF on a given dataset
 Version: 0.1.0
 Authors@R: c(
     person(
@@ -9,16 +9,21 @@ Authors@R: c(
       role = c("aut", "cre")
     )
   )
-Description: A set of tools to train and evaluate the SCARF model into a given
-    dataset, avoiding the need to rely on Python.
-    Objetive. trained_model <- train(dataset)
-    Objective. results <- downstream(trained_model, dataset)
-    Objective. latent_features <- get_features(trained_model, dataset)
+Description: A set of tools to train and evaluate the SCARF model into a given 
+    dataset. You provide the data and create and train a SCARF model using 
+    'scarf_fit'. Then, you can use the pretrained model, stored in your machine,
+    to extract the latent representations of a given dataset using 
+    'scarf_feature_extractor'. The package allows the evaluation of the 
+    representations by training a classifier with 
+    'train_classifier_on_representations', and the evaluation of the 
+    classifier with 'downstream_prediction'.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports: 
-    arrow,
+    dplyr,
+    rlang,
+    R6,
     butcher,
     coro,
     luz,

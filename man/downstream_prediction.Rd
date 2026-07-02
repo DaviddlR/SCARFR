@@ -2,7 +2,7 @@
 % Please edit documentation in R/evaluate_representations.R
 \name{downstream_prediction}
 \alias{downstream_prediction}
-\title{Title}
+\title{Obtain predictions of a classifier trained on top of latent representations}
 \usage{
 downstream_prediction(
   df_test,
@@ -14,24 +14,79 @@ downstream_prediction(
 )
 }
 \arguments{
-\item{df_test}{Test dataframe in which the classification model will predict each sample.}
+\item{df_test}{A \code{data.frame} representing the test/evaluation set.}
 
-\item{pretrained_model_path}{Path to the pretrained model.}
+\item{pretrained_model_path}{\code{String}. Path to the pretrained SCARF bundle.}
 
-\item{classification_model_path}{Path to the classification model.}
+\item{label_column}{\code{String}. Name of the column containing the true labels (used for mapping or reporting).}
 
-\item{exclude_columns}{Columns that the classification model should ignore during training and inference (i.e target or ID columns). Default: NULL.}
+\item{classification_model_path}{\code{String}. Path prefix to the trained classifier bundle (excluding the ".pt" extension).}
 
-\item{return_classification_report}{Indicate whether the user want to produce a classification report (TRUE) or just the predictions (FALSE). Default: FALSE.}
+\item{exclude_columns}{A \code{string} of columns that the models should ignore (i.e target or ID columns). Default is \code{NULL}.}
 
-\item{target_column}{Column of the dataframe that store the sample's label.}
+\item{return_classification_report}{\code{Boolean}. If \code{TRUE}, prints a confusion matrix and the global accuracy to the console. Default is \code{FALSE}.}
 }
 \value{
-A "list" with the predicted label and probability score of each sample.
+A \code{list} containing:
+\itemize{
+  \item \code{predictions}: A String vector with the predicted class names for each sample.
+  \item \code{probabilities}: An array containing the softmax probability scores for each class.
+}
 }
 \description{
-Title
+Obtain predictions of a classifier trained on top of latent representations
 }
 \examples{
-a <- 1
+\donttest{
+
+if (torch::torch_is_installed()) {
+  df_train <- data.frame(
+    id = 1:100,
+    v1 = rnorm(100),
+    v2 = factor(sample(c("A", "B"), 100, replace = TRUE)),
+    target = sample(c("Class1", "Class2"), 100, replace = TRUE)
+  )
+
+  df_test <- data.frame(
+    id = 1:20,
+    v1 = rnorm(100),
+    v2 = factor(sample(c("A", "B"), 100, replace = TRUE)),
+    target = sample(c("Class1", "Class2"), 100, replace = TRUE)
+  )
+
+  tmp_scarf <- tempfile(fileext = ".pt")
+  tmp_class <- tempfile()
+
+  # SCARF pretraining and train classifier
+  scarf_fit(
+    df_train,
+    exclude_columns = c("id", "target"),
+    n_epochs = 1,
+    save_path = tmp_scarf
+  )
+
+  train_classifier_on_representations(
+    df_train,
+    tmp_scarf,
+    "target",
+    num_classes = 2,
+    exclude_columns = c("id", "target"),
+    save_path = tmp_class
+  )
+
+  results <- downstream_prediction(
+    df_test = df_test,
+    pretrained_model_path = tmp_scarf,
+    label_column = "target",
+    classification_model_path = tmp_class,
+    exclude_columns = c("id", "target"),
+    return_classification_report = TRUE
+  )
+
+  if (file.exists(tmp_scarf)) file.remove(tmp_scarf)
+  if (file.exists(paste0(tmp_class, ".pt"))) file.remove(paste0(tmp_class, ".pt"))
+}
+
+}
+
 }
