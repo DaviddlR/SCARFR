@@ -9,7 +9,7 @@
 #' @param label_column \code{String}. Name of the column containing the labels. Required if \code{want_labels = TRUE}. Default is \code{NULL}.
 #' @param num_classes \code{Integer}. Total number of unique classes in the target column.
 #' @param exclude_columns A \code{string} of columns that the models should ignore (i.e target or ID columns). Default is \code{NULL}.
-#' @param classification_model_type \code{String}. Type of architecture to train. Currently only \code{"MLP"} is supported.
+#' @param classification_model_type \code{String}. Type of architecture to train. Currently, \code{"MLP", "Random Forest", "XGB", "KNN", "SVM" and "C50"} are supported. Default is \code{NULL}.
 #' @param dropout \code{Numeric}. Dropout probability for the classification layers. Default is \code{0.2}.
 #' @param doitsmall \code{Boolean}. If \code{TRUE}, sub-samples the training set to 1\% for quick experimentation. Default is \code{FALSE}.
 #' @param save_path \code{String}. Path where the trained classifier bundle (.pt) will be saved. Extension ('.pt') should not be included. Default is \code{"classifier"}, which saves a 'classifier.pt' file in the current directory.
@@ -52,7 +52,7 @@
 #'   if (file.exists(paste0(tmp_class, ".pt"))) file.remove(paste0(tmp_class, ".pt"))
 #' }
 #' }
-train_classifier_on_representations = function(df_train, pretrained_model_path, label_column, num_classes, exclude_columns = NULL, classification_model_type = "MLP", dropout = 0.2, doitsmall = FALSE, save_path = "classifier") {
+train_classifier_on_representations = function(df_train, pretrained_model_path, label_column, num_classes, exclude_columns = NULL, parsnip_classification_model = NULL, classification_model_type = NULL, dropout = 0.2, doitsmall = FALSE, save_path = "classifier") {
 
   if(doitsmall) {
 
@@ -86,6 +86,7 @@ train_classifier_on_representations = function(df_train, pretrained_model_path, 
 
 
   # TRAIN MLP
+  # TODO: permitir que especifique su propio modelo MLP ??
   if (identical(classification_model_type, "MLP")) {
 
     # Convert factor labels to integer
@@ -144,12 +145,34 @@ train_classifier_on_representations = function(df_train, pretrained_model_path, 
       classifier_state_dict = classifier_weights,
       classifier_hparams = hparams,
       levels = serialize(train_levels, NULL),
-      bundle_type = "classifier_bundle"
+      bundle_type = "classifier_torch_bundle"
     )
 
-
   # TRAIN MODEL USING PARSNIP
-  } else {
+  # Train predefined model
+  } else if (!(is.null(parsnip_classification_model))) {
+
+    if (!requireNamespace("parsnip", quietly = TRUE)){
+      stop("The 'parsnip' package is not installed. To train the specified classifier you need that package")
+    }
+
+    # Fit model
+    fitted_model <- parsnip_classification_model |>
+      parsnip::fit_xy(
+        x = as.data.frame(features),
+        y = y_train_factor
+      )
+
+
+    # Create model bundle to save
+    model_bundle <- list(
+      classifier_model = serialize(fitted_model, NULL),
+      levels = serialize(train_levels, NULL),
+      bundle_type = "classifier_parsnip_bundle"
+    )
+
+  # Train selected model type
+  } else if (!(is.null(classification_model_type))) {
 
     if (!requireNamespace("parsnip", quietly = TRUE)){
       stop("The 'parsnip' package is not installed. To train the specified classifier you need that package")
@@ -178,13 +201,15 @@ train_classifier_on_representations = function(df_train, pretrained_model_path, 
 
     # Create model bundle to save
     model_bundle <- list(
-      classifier_model = fitted_model,
-      levels = train_levels,
-      bundle_type = "classifier_bundle"
+      classifier_model = serialize(fitted_model, NULL),
+      levels = serialize(train_levels, NULL),
+      bundle_type = "classifier_parsnip_bundle"
     )
 
 
 
+  } else {
+    stop("You have to define the classification model type or use one pre-defined parsnip model.")
   }
 
 
@@ -272,9 +297,12 @@ train_classifier_on_representations = function(df_train, pretrained_model_path, 
 downstream_prediction = function(df_test, pretrained_model_path, label_column, classification_model_path, exclude_columns = NULL, return_classification_report = FALSE) {
 
   # Load model
-  fitted_classifier_bundle <- load_classifier_bundle(paste(classification_model_path, ".pt", sep=""))
+  fitted_classifier_bundle <- load_classifier_bundle(paste0(classification_model_path, ".pt"))
 
   fitted_classifier <- fitted_classifier_bundle$classifier
+  classifier_type <- fitted_classifier_bundle$type
+
+  print(classifier_type)
 
   # Extract latent features of test set
   extracted_features_test <- scarf_feature_extractor(df_test,
@@ -287,77 +315,108 @@ downstream_prediction = function(df_test, pretrained_model_path, label_column, c
   features_test <- extracted_features_test$features
   labels_test <- extracted_features_test$features_labels
 
+
+  # Process labels
+  y_test <- factor(labels_test, levels = fitted_classifier_bundle$levels)
   # Label encoder
-  y_test_encoded <- as.integer(factor(labels_test, levels = fitted_classifier_bundle$levels))
+  y_test_encoded <- as.integer(y_test)
 
-  # Set X and Y as tensors
-  features_test_tensor <- torch::torch_tensor(features_test, dtype = torch::torch_float())
-  y_test_tensor <- torch::torch_tensor(y_test_encoded, dtype = torch::torch_long())
+  # If classifier is MLP
+  if (identical(classifier_type, "torch")) {
 
-  print(y_test_tensor[2])
+    # Set X and Y as tensors
+    features_test_tensor <- torch::torch_tensor(features_test, dtype = torch::torch_float())
+    y_test_tensor <- torch::torch_tensor(y_test_encoded, dtype = torch::torch_long())
 
-  # Create dataset and dataloader
-  test_ds <- torch::tensor_dataset(features_test_tensor, y_test_tensor)
+    print(y_test_tensor[2])
 
-  test_dl <- torch::dataloader(
-    test_ds,
-    batch_size = 256,
-    shuffle = FALSE
-  )
+    # Create dataset and dataloader
+    test_ds <- torch::tensor_dataset(features_test_tensor, y_test_tensor)
 
-  # Predict on the test set
-
-  # Prepare model
-  device <- if(torch::cuda_is_available()) torch::torch_device("cuda") else torch::torch_device("cpu")
-  message("Ejecutando inferencia en: ", if (torch::cuda_is_available()) "GPU (CUDA)" else "CPU")
-
-  fitted_classifier$to(device = device)
-  fitted_classifier$eval()
-
-  # Loop on the dataloader
-  predictions <- list()
-
-  torch::with_no_grad({
-    coro::loop(
-      for(batch in test_dl) {
-
-        # Take batch
-        x_batch <- batch[[1]]$to(device = device)
-
-        # Forward pass
-        batch_prediction <- fitted_classifier(x_batch)
-
-        # Store predictions
-        predictions[[length(predictions) + 1]] <- batch_prediction$cpu()
-      }
+    test_dl <- torch::dataloader(
+      test_ds,
+      batch_size = 256,
+      shuffle = FALSE
     )
-  })
 
-  # Concatenate batches
-  predictions <- torch::torch_cat(predictions, dim=1)
+    # Predict on the test set
 
-  print("Raw predictions: ")
-  print(dim(predictions))
-  print(predictions[2])
+    # Prepare model
+    device <- if(torch::cuda_is_available()) torch::torch_device("cuda") else torch::torch_device("cpu")
+    message("Ejecutando inferencia en: ", if (torch::cuda_is_available()) "GPU (CUDA)" else "CPU")
+
+    fitted_classifier$to(device = device)
+    fitted_classifier$eval()
+
+    # Loop on the dataloader
+    predictions <- list()
+
+    torch::with_no_grad({
+      coro::loop(
+        for(batch in test_dl) {
+
+          # Take batch
+          x_batch <- batch[[1]]$to(device = device)
+
+          # Forward pass
+          batch_prediction <- fitted_classifier(x_batch)
+
+          # Store predictions
+          predictions[[length(predictions) + 1]] <- batch_prediction$cpu()
+        }
+      )
+    })
+
+    # Concatenate batches
+    predictions <- torch::torch_cat(predictions, dim=1)
+
+    print("Raw predictions: ")
+    print(dim(predictions))
+    print(predictions[2])
 
 
 
-  # Get probabilities
-  sm <- torch::nn_softmax(dim = 2)
-  probabilities <- sm(predictions)
-  probabilities <- as.array(probabilities)
+    # Get probabilities
+    sm <- torch::nn_softmax(dim = 2)
+    probabilities <- sm(predictions)
+    probabilities <- as.array(probabilities)
 
-  print("Probabilities: ")
-  print(dim(probabilities))
-  print(probabilities[2, ])
+    print("Probabilities: ")
+    print(dim(probabilities))
+    print(probabilities[2, ])
 
-  # Get predicted class index
-  pred_indices <- as.integer(torch::torch_argmax(probabilities, dim=2))
-  print(pred_indices[2])
+    # Get predicted class index
+    pred_indices <- as.integer(torch::torch_argmax(probabilities, dim=2))
+    print(pred_indices[2])
 
-  # Get predicted class name (using train_levels)
-  pred_label <- fitted_classifier_bundle$levels[pred_indices]
-  print(pred_label[2])
+    # Get predicted class name (using train_levels)
+    pred_label <- fitted_classifier_bundle$levels[pred_indices]
+    print(pred_label[2])
+
+    # If classifier is parsnip
+  } else if (identical(classifier_type, "parsnip")) {
+
+    features_df <- as.data.frame(features_test)
+
+    prob_df <- parsnip::predict.model_fit(fitted_classifier, new_data = features_df, type = "prob")  # Get probabilities
+    class_df <- parsnip::predict.model_fit(fitted_classifier, new_data = features_df, type = "class")  # Get class predictions
+
+    probabilities = unname(as.matrix(prob_df))
+
+
+    pred_label <- as.character(class_df$.pred_class)
+    pred_indices <- as.integer(class_df$.pred_class)
+
+
+
+  } else {
+    stop("The classifier model is not recognized. Please, train a model using 'train_classifier_on_representations'.")
+  }
+
+
+
+
+
 
   # Evaluate if required
   if(return_classification_report){

@@ -51,8 +51,8 @@ load_classifier_bundle = function(bundle_path) {
   # Load pretrained model and recipe
   model_bundle <- torch::torch_load(bundle_path)
 
-  # Validate input
-  if(is.list(model_bundle) && identical(model_bundle$bundle_type, "classifier_bundle")) {
+  # Check if classifier comes from torch
+  if(is.list(model_bundle) && identical(model_bundle$bundle_type, "classifier_torch_bundle")) {
 
     # Load encoder hyperparameters
     classifier_weights <- model_bundle$classifier_state_dict
@@ -73,7 +73,20 @@ load_classifier_bundle = function(bundle_path) {
 
     return(list(
       classifier = classifier_net,
-      levels = trained_levels
+      levels = trained_levels,
+      type = "torch"
+    ))
+
+  # Check if classifier comes from parsnip
+  } else if (is.list(model_bundle) && identical(model_bundle$bundle_type, "classifier_parsnip_bundle")) {
+
+    trained_levels <- unserialize(model_bundle$levels)
+    classifier_model <- unserialize(model_bundle$classifier_model)
+
+    return(list(
+      classifier = classifier_model,
+      levels = trained_levels,
+      type = "parsnip"
     ))
 
   } else {
