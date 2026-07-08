@@ -112,7 +112,19 @@ scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation 
     bundle_type = "scarf_bundle"
   )
 
-  torch::torch_save(model_bundle, path = paste0(save_path, ".pt"))
+
+  # If save_path is not null, save model (it will be NULL when using it as a recipe)
+  if (!is.null(save_path)){
+    torch::torch_save(model_bundle, path = paste0(save_path, ".pt"))
+    message("Pretrained model saved in ", save_path, ".pt")
+  }
+
+  # Return invisible for the recipe prep and bake
+  return(invisible(model_bundle))
+
+
+
+
 
 
 

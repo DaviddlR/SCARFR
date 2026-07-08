@@ -1,7 +1,7 @@
 #' Extract latent features from a given dataset using a pretrained SCARF model.
 #'
 #' @param dataframe A \code{data.frame} from which to extract features.
-#' @param pretrained_model_path \code{String}. Path to the pretrained SCARF model (.pt file).
+#' @param pretrained_model \code{String} or \code{list}. Path to the pretrained SCARF model (.pt file) if String or SCARF bundle if \code{list}.
 #' @param exclude_columns A \code{string} of columns that the model should ignore during inference (i.e target or ID columns). Default is \code{NULL}.
 #' @param want_labels \code{Boolean}. If \code{TRUE}, the function extracts and returns the target labels alongside features. Default is \code{FALSE}.
 #' @param label_column \code{String}. Name of the column containing the labels. Required if \code{want_labels = TRUE}. Default is \code{NULL}.
@@ -40,7 +40,7 @@
 #' # Extract features
 #' extracted <- scarf_feature_extractor(
 #'   dataframe = df_train,
-#'   pretrained_model_path = tmp_path,
+#'   pretrained_model = tmp_path,
 #'   exclude_columns = c("user_id", "cancellation"),
 #'   want_labels = TRUE,
 #'   label_column = "cancellation"
@@ -52,10 +52,19 @@
 #' if (file.exists(tmp_path)) file.remove(tmp_path)
 #'
 #' }
-scarf_feature_extractor = function(dataframe, pretrained_model_path, exclude_columns = NULL, want_labels = FALSE, label_column = NULL, batch_size = 32) {
+scarf_feature_extractor = function(dataframe, pretrained_model, exclude_columns = NULL, want_labels = FALSE, label_column = NULL, batch_size = 32) {
 
   # Extract pretrained model and recipe
-  bundle <- load_scarf_bundle(pretrained_model_path)
+
+  # If character, it is the pretrained model path
+  if (is.character(pretrained_model)){
+    bundle <- load_scarf_bundle(pretrained_model)
+  # If list, it is the model loaded in RAM
+  } else if (is.list(pretrained_model)) {
+    stop("Adapta utils > load_scarf_bundle para que acepte un objeto en memoria")
+  } else {
+    stop("The 'pretrained_model' parameter must be a .pt file created with 'scarf_fit' or a list object type SCARF bundle")
+  }
 
   fitted_encoder <- bundle$encoder
   trained_recipe <- bundle$recipe
