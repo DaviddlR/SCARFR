@@ -55,19 +55,12 @@
 scarf_feature_extractor = function(dataframe, pretrained_model, exclude_columns = NULL, want_labels = FALSE, label_column = NULL, batch_size = 32) {
 
   # Extract pretrained model and recipe
+  bundle <- load_scarf_bundle(pretrained_model)
 
-  # If character, it is the pretrained model path
-  if (is.character(pretrained_model)){
-    bundle <- load_scarf_bundle(pretrained_model)
-  # If list, it is the model loaded in RAM
-  } else if (is.list(pretrained_model)) {
-    stop("Adapta utils > load_scarf_bundle para que acepte un objeto en memoria")
-  } else {
-    stop("The 'pretrained_model' parameter must be a .pt file created with 'scarf_fit' or a list object type SCARF bundle")
-  }
 
   fitted_encoder <- bundle$encoder
   trained_recipe <- bundle$recipe
+
 
   # Prepare data
   if (want_labels & is.null(label_column)) {

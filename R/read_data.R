@@ -71,12 +71,10 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
 
   # Validation set
   if(create_validation){
-    n_samples <- nrow(x_train_orig)
-    validation_size <- floor(validation_proportion * n_samples)
-    val_indices <- sample(seq_len(n_samples), size=validation_size)
+    after_validation <- create_validation_set(x_train_orig, validation_proportion)
 
-    x_val <- x_train_orig[val_indices, , drop=FALSE]
-    x_train <- x_train_orig[-val_indices, , drop=FALSE]
+    x_train <- after_validation$x_tr
+    x_val <- after_validation$x_val
 
   } else {
     x_train <- x_train_orig

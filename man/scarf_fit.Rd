@@ -11,7 +11,8 @@ scarf_fit(
   validation_proportion = 0.1,
   batch_size = 256,
   n_epochs = 1,
-  save_path = "SCARF"
+  save_path = "SCARF",
+  preprocess = FALSE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ scarf_fit(
 \item{n_epochs}{\code{Integer}. Number of training epochs. Default is \code{150}.}
 
 \item{save_path}{\code{String}. Path where the pretrained bundle (.pt) will be saved. Extension ('.pt') should not be included. Default is \code{"SCARF"}, which saves a 'SCARF.pt' file in the current directory.}
+
+\item{preprocess}{\code{Boolean}. Set if the data need preprocessing steps using 'recipes', such as 'step_normalize' or 'step_dummy'. Default is \code{TRUE}, meaning that this process is automatically done.}
 }
 \value{
 Invisible \code{NULL}. The function saves a serialized list containing the encoder state dict, hyperparameters, and the preprocessing recipe to \code{save_path}.
@@ -45,7 +48,7 @@ if (torch::torch_is_installed()) {
     age = rnorm(120, mean = 35, sd = 10),
     income = runif(120, 15000, 75000),
     risk_profile = factor(sample(c("Low", "Medium", "High"), 120, replace = TRUE)),
-    cancellation = sample(0:1, 120, replace = TRUE)
+    label = sample(0:1, 120, replace = TRUE)
   )
 
   tmp_path <- tempfile(fileext = ".pt")
@@ -53,9 +56,10 @@ if (torch::torch_is_installed()) {
   # Fit SCARF one epoch
   scarf_fit(
     dataframe_train = df_train,
-    exclude_columns = c("user_id", "cancelation"),
+    exclude_columns = c("user_id", "label"),
     n_epochs = 1,
-    save_path = tmp_path
+    save_path = tmp_path,
+    preprocess = TRUE
   )
 
   # Remove temp file

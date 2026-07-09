@@ -6,7 +6,7 @@
 \usage{
 scarf_feature_extractor(
   dataframe,
-  pretrained_model_path,
+  pretrained_model,
   exclude_columns = NULL,
   want_labels = FALSE,
   label_column = NULL,
@@ -16,7 +16,7 @@ scarf_feature_extractor(
 \arguments{
 \item{dataframe}{A \code{data.frame} from which to extract features.}
 
-\item{pretrained_model_path}{\code{String}. Path to the pretrained SCARF model (.pt file).}
+\item{pretrained_model}{\code{String} or \code{list}. Path to the pretrained SCARF model (.pt file) if String or SCARF bundle if \code{list}.}
 
 \item{exclude_columns}{A \code{string} of columns that the model should ignore during inference (i.e target or ID columns). Default is \code{NULL}.}
 
@@ -61,7 +61,7 @@ scarf_fit(
 # Extract features
 extracted <- scarf_feature_extractor(
   dataframe = df_train,
-  pretrained_model_path = tmp_path,
+  pretrained_model = tmp_path,
   exclude_columns = c("user_id", "cancellation"),
   want_labels = TRUE,
   label_column = "cancellation"

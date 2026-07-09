@@ -8,8 +8,16 @@
 #'
 load_scarf_bundle = function(bundle_path) {
 
-  # Load pretrained model and recipe
-  model_bundle <- torch::torch_load(paste(bundle_path, ".pt", sep=""))
+
+  if (is.character(bundle_path)){
+    # Stored locally. Load pretrained model and recipe
+    model_bundle <- torch::torch_load(paste(bundle_path, ".pt", sep=""))
+  } else if (is.list(bundle_path)) {
+    # Stored in RAM. No need to load.
+    model_bundle <- bundle_path
+  } else {
+    stop("The 'bundle_path' parameter must be a .pt file created with 'scarf_fit' or a list object type SCARF bundle")
+  }
 
   # Validate input
   if(is.list(model_bundle) && identical(model_bundle$bundle_type, "scarf_bundle")) {
@@ -93,6 +101,25 @@ load_classifier_bundle = function(bundle_path) {
     stop("The input is not a scarf_bundle. Please, train the model using scarf_fit() and set the pretrained_model_path to the path in which the trained model is stored")
   }
 
+}
+
+
+
+
+
+
+create_validation_set = function(x, validation_proportion) {
+  n_samples <- nrow(x)
+  validation_size <- floor(validation_proportion * n_samples)
+  val_indices <- sample(seq_len(n_samples), size=validation_size)
+
+  x_val <- x[val_indices, , drop=FALSE]
+  x_train <- x[-val_indices, , drop=FALSE]
+
+  return(list(
+    x_tr = x_train,
+    x_val = x_val
+  ))
 }
 
 

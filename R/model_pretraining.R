@@ -11,6 +11,8 @@
 #' @param batch_size \code{Integer}. Number of samples per batch during training. Default is \code{256}.
 #' @param n_epochs \code{Integer}. Number of training epochs. Default is \code{150}.
 #' @param save_path \code{String}. Path where the pretrained bundle (.pt) will be saved. Extension ('.pt') should not be included. Default is \code{"SCARF"}, which saves a 'SCARF.pt' file in the current directory.
+#' @param preprocess \code{Boolean}. Set if the data need preprocessing steps using 'recipes', such as 'step_normalize' or 'step_dummy'. Default is \code{TRUE}, meaning that this process is automatically done.
+#'
 #'
 #' @returns Invisible \code{NULL}. The function saves a serialized list containing the encoder state dict, hyperparameters, and the preprocessing recipe to \code{save_path}.
 #' @export
@@ -25,7 +27,7 @@
 #'     age = rnorm(120, mean = 35, sd = 10),
 #'     income = runif(120, 15000, 75000),
 #'     risk_profile = factor(sample(c("Low", "Medium", "High"), 120, replace = TRUE)),
-#'     cancellation = sample(0:1, 120, replace = TRUE)
+#'     label = sample(0:1, 120, replace = TRUE)
 #'   )
 #'
 #'   tmp_path <- tempfile(fileext = ".pt")
@@ -33,9 +35,10 @@
 #'   # Fit SCARF one epoch
 #'   scarf_fit(
 #'     dataframe_train = df_train,
-#'     exclude_columns = c("user_id", "cancelation"),
+#'     exclude_columns = c("user_id", "label"),
 #'     n_epochs = 1,
-#'     save_path = tmp_path
+#'     save_path = tmp_path,
+#'     preprocess = TRUE
 #'   )
 #'
 #'   # Remove temp file
@@ -43,8 +46,10 @@
 #' }
 #' }
 #'
-scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation = FALSE, validation_proportion = 0.1, batch_size = 256, n_epochs = 1, save_path = "SCARF") {
+scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation = FALSE, validation_proportion = 0.1, batch_size = 256, n_epochs = 1, save_path = "SCARF", preprocess = FALSE) {
 
+
+  # TODO: arreglar esto con el preprocess
   # Load and preprocess data
   preprocessed_datasets <- prepare_scarf_data(dataframe_train, exclude_columns = exclude_columns, create_validation = create_validation, validation_proportion = validation_proportion)
 
@@ -113,7 +118,7 @@ scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation 
   )
 
 
-  # If save_path is not null, save model (it will be NULL when using it as a recipe)
+  # If save_path is not null, save model locally (it will be NULL when using it as a recipe, when stored in RAM)
   if (!is.null(save_path)){
     torch::torch_save(model_bundle, path = paste0(save_path, ".pt"))
     message("Pretrained model saved in ", save_path, ".pt")
@@ -121,20 +126,6 @@ scarf_fit = function(dataframe_train, exclude_columns = NULL, create_validation 
 
   # Return invisible for the recipe prep and bake
   return(invisible(model_bundle))
-
-
-
-
-
-
-
-
-
-
-
-  #luz::luz_save(fitted, "scarf_trained.rds")
-
-
 
 
 }

@@ -11,7 +11,7 @@ train_classifier_on_representations(
   num_classes,
   exclude_columns = NULL,
   parsnip_classification_model = NULL,
-  classification_model_type = "MLP",
+  classification_model_type = NULL,
   dropout = 0.2,
   doitsmall = FALSE,
   save_path = "classifier"
@@ -28,7 +28,7 @@ train_classifier_on_representations(
 
 \item{exclude_columns}{A \code{string} of columns that the models should ignore (i.e target or ID columns). Default is \code{NULL}.}
 
-\item{classification_model_type}{\code{String}. Type of architecture to train. Currently, \code{"MLP", "Random Forest", "XGB", "KNN", "SVM" and "C50"} are supported.}
+\item{classification_model_type}{\code{String}. Type of architecture to train. Currently, \code{"MLP", "Random Forest", "XGB", "KNN", "SVM" and "C50"} are supported. Default is \code{NULL}.}
 
 \item{dropout}{\code{Numeric}. Dropout probability for the classification layers. Default is \code{0.2}.}
 
@@ -66,10 +66,11 @@ if (torch::torch_is_installed()) {
   # Train classifier
   train_classifier_on_representations(
     df_train = df_train,
-    pretrained_model_path = tmp_scarf,
+    pretrained_model = tmp_scarf,
     label_column = "target",
     num_classes = 2,
     exclude_columns = "id",
+    classification_model_type = "MLP",
     save_path = tmp_class
   )
 

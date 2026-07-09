@@ -41,10 +41,11 @@
 #'   # Train classifier
 #'   train_classifier_on_representations(
 #'     df_train = df_train,
-#'     pretrained_model_path = tmp_scarf,
+#'     pretrained_model = tmp_scarf,
 #'     label_column = "target",
 #'     num_classes = 2,
 #'     exclude_columns = "id",
+#'     classification_model_type = "MLP",
 #'     save_path = tmp_class
 #'   )
 #'
@@ -306,7 +307,7 @@ downstream_prediction = function(df_test, pretrained_model_path, label_column, c
 
   # Extract latent features of test set
   extracted_features_test <- scarf_feature_extractor(df_test,
-                                                     pretrained_model_path = pretrained_model_path,
+                                                     pretrained_model = pretrained_model_path,
                                                      exclude_columns = exclude_columns,
                                                      want_labels = TRUE,
                                                      label_column = label_column,
