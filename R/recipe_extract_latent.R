@@ -71,6 +71,7 @@ step_extract_latent <- function(
   id = recipes::rand_id("extract_latent")
 
   ) {
+  # TODO: corregir para escalabilidad
     # Add step
     recipes::add_step(
       recipe,
@@ -148,8 +149,9 @@ prep.step_extract_latent <- function(x, training, info = NULL, ...) {
   # Prep logic. Adjust to new data (training)
 
   # We have SCARF_fit, so we can reuse this method
-  pretrained_SCARF <- scarf_fit(
+  pretrained_model <- fit_extractor(
     dataframe_train = training_data,
+    pretraining_type = x$pretraining_type,
     exclude_columns = NULL,  # Force NULL. The user filter the columns with recipes
     create_validation = x$create_validation,
     validation_proportion = x$validation_proportion,
@@ -172,7 +174,7 @@ prep.step_extract_latent <- function(x, training, info = NULL, ...) {
     batch_size = x$batch_size,
     epochs = x$epochs,
     batch_size_inference = x$batch_size_inference,
-    pretrained_model = pretrained_SCARF,  # Store the pretrained model
+    pretrained_model = pretrained_model,  # Store the pretrained model
     columns = col_names,
     skip = x$skip,
     id = x$id
@@ -192,9 +194,10 @@ bake.step_extract_latent <- function(object, new_data, ...) {
   data_to_extract <- as.data.frame(new_data[, col_names], drop = FALSE)
 
   # Bake logic. Apply the pretrained model to new data
-  extracted_data <- scarf_feature_extractor(
+  extracted_data <- extract_features(
     dataframe = data_to_extract,
     pretrained_model = object$pretrained_model,
+    pretraining_type = object$pretraining_type,
     exclude_columns = NULL,
     want_labels = FALSE,
     label_column = NULL,

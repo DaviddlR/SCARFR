@@ -5,7 +5,8 @@
 #' Train a classifier on top of the latent representations created by a pretrained model.
 #'
 #' @param df_train A \code{data.frame} containing the training samples and labels.
-#' @param pretrained_model_path \code{String}. Path to the pretrained SCARF model (.pt file).
+#' @param pretrained_model_path \code{String}. Path to the pretrained model for feature extraction (.pt file).
+#' @param pretraining_type A \code{character} indicating the pretraining objective. Default is \code{"SCARF"}, so that it will use a SCARF pretrained module. Available options are \code{["SCARF"]}.
 #' @param label_column \code{String}. Name of the column containing the labels. Required if \code{want_labels = TRUE}. Default is \code{NULL}.
 #' @param num_classes \code{Integer}. Total number of unique classes in the target column.
 #' @param exclude_columns A \code{string} of columns that the models should ignore (i.e target or ID columns). Default is \code{NULL}.
@@ -29,20 +30,21 @@
 #'     target = sample(c("Class1", "Class2"), 100, replace = TRUE)
 #'   )
 #'
-#'   tmp_scarf <- tempfile(fileext = ".pt")
+#'   tmp_pretrained <- tempfile(fileext = ".pt")
 #'   tmp_class <- tempfile()
 #'
-#'   scarf_fit(
-#'     df_train,
-#'     exclude_columns = c("id", "target"),
+#'   fit_extractor(
+#'     dataframe_train = df_train,
+#'     pretraining_type = "SCARF",
+#'     exclude_columns = c("user_id", "cancellation"),
 #'     n_epochs = 1,
-#'     save_path = tmp_scarf
+#'     save_path = tmp_pretrained
 #'   )
 #'
 #'   # Train classifier
-#'   train_classifier_on_representations(
+#'   train_classifier_on_extracted_features(
 #'     df_train = df_train,
-#'     pretrained_model = tmp_scarf,
+#'     pretrained_model = tmp_pretrained,
 #'     label_column = "target",
 #'     num_classes = 2,
 #'     exclude_columns = "id",
@@ -50,11 +52,12 @@
 #'     save_path = tmp_class
 #'   )
 #'
-#'   if (file.exists(tmp_scarf)) file.remove(tmp_scarf)
+#'   if (file.exists(tmp_pretrained)) file.remove(tmp_pretrained)
 #'   if (file.exists(paste0(tmp_class, ".pt"))) file.remove(paste0(tmp_class, ".pt"))
 #' }
 #' }
-train_classifier_on_representations = function(df_train, pretrained_model_path, label_column, num_classes, exclude_columns = NULL, parsnip_classification_model = NULL, classification_model_type = NULL, dropout = 0.2, doitsmall = FALSE, save_path = "classifier") {
+train_classifier_on_extracted_features = function(df_train, pretrained_model_path, pretraining_type, label_column, num_classes, exclude_columns = NULL, parsnip_classification_model = NULL, classification_model_type = NULL, dropout = 0.2, doitsmall = FALSE, save_path = "classifier") {
+
 
   if(doitsmall) {
 
@@ -68,11 +71,13 @@ train_classifier_on_representations = function(df_train, pretrained_model_path, 
   }
 
   # Extract latent features of train set
-  extracted_features <- scarf_feature_extractor(df_train,
-                                                pretrained_model_path,
-                                                exclude_columns = exclude_columns,
-                                                want_labels = TRUE,
-                                                label_column = label_column)
+  extracted_features <- extract_features(
+    df_train,
+    pretrained_model_path,
+    pretraining_type = pretraining_type,
+    exclude_columns = exclude_columns,
+    want_labels = TRUE,
+    label_column = label_column)
 
   features <- extracted_features$features
   y_train <- extracted_features$features_labels
@@ -229,7 +234,8 @@ train_classifier_on_representations = function(df_train, pretrained_model_path, 
 #' Obtain predictions of a classifier trained on top of latent representations
 #'
 #' @param df_test A \code{data.frame} representing the test/evaluation set.
-#' @param pretrained_model_path \code{String}. Path to the pretrained SCARF bundle.
+#' @param pretrained_model_path \code{String}. Path to the pretrained model for feature extraction (.pt file).
+#' @param pretraining_type A \code{character} indicating the pretraining objective. Default is \code{"SCARF"}, so that it will use a SCARF pretrained module. Available options are \code{["SCARF"]}.
 #' @param label_column \code{String}. Name of the column containing the true labels (used for mapping or reporting).
 #' @param classification_model_path \code{String}. Path prefix to the trained classifier bundle (excluding the ".pt" extension).
 #' @param exclude_columns A \code{string} of columns that the models should ignore (i.e target or ID columns). Default is \code{NULL}.
@@ -265,16 +271,18 @@ train_classifier_on_representations = function(df_train, pretrained_model_path, 
 #'   tmp_class <- tempfile()
 #'
 #'   # SCARF pretraining and train classifier
-#'   scarf_fit(
+#'   fit_extractor(
 #'     df_train,
+#'     "SCARF",
 #'     exclude_columns = c("id", "target"),
 #'     n_epochs = 1,
 #'     save_path = tmp_scarf
 #'   )
 #'
-#'   train_classifier_on_representations(
+#'   train_classifier_on_extracted_features(
 #'     df_train,
 #'     tmp_scarf,
+#'     "SCARF",
 #'     "target",
 #'     num_classes = 2,
 #'     exclude_columns = c("id", "target"),
@@ -284,6 +292,7 @@ train_classifier_on_representations = function(df_train, pretrained_model_path, 
 #'   results <- downstream_prediction(
 #'     df_test = df_test,
 #'     pretrained_model_path = tmp_scarf,
+#'     pretraining_type = "SCARF",
 #'     label_column = "target",
 #'     classification_model_path = tmp_class,
 #'     exclude_columns = c("id", "target"),
@@ -296,7 +305,7 @@ train_classifier_on_representations = function(df_train, pretrained_model_path, 
 #'
 #' }
 #'
-downstream_prediction = function(df_test, pretrained_model_path, label_column, classification_model_path, exclude_columns = NULL, return_classification_report = FALSE) {
+downstream_prediction = function(df_test, pretrained_model_path, pretraining_type, label_column, classification_model_path, exclude_columns = NULL, return_classification_report = FALSE) {
 
   # Load model
   fitted_classifier_bundle <- load_classifier_bundle(paste0(classification_model_path, ".pt"))
@@ -307,12 +316,15 @@ downstream_prediction = function(df_test, pretrained_model_path, label_column, c
   print(classifier_type)
 
   # Extract latent features of test set
-  extracted_features_test <- scarf_feature_extractor(df_test,
-                                                     pretrained_model = pretrained_model_path,
-                                                     exclude_columns = exclude_columns,
-                                                     want_labels = TRUE,
-                                                     label_column = label_column,
-                                                     batch_size = 32)
+  extracted_features_test <- extract_features(
+    df_test,
+    pretrained_model = pretrained_model_path,
+    pretraining_type = pretraining_type,
+    exclude_columns = exclude_columns,
+    want_labels = TRUE,
+    label_column = label_column,
+    batch_size = 32
+  )
 
   features_test <- extracted_features_test$features
   labels_test <- extracted_features_test$features_labels

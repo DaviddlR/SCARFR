@@ -3,10 +3,10 @@
 #' Function to read and check a SCARF bundle
 #'
 #' @param bundle_path Path to file storing a "scarf_bundle" object
-#'
+#' @param pretraining_type A \code{character} indicating the pretraining objective used by the model stored in the bundle. Default is \code{"SCARF"}. Available options are \code{["SCARF"]}.
 #' @returns Pretrained model's weights and trained recipe for preprocessing
 #'
-load_scarf_bundle = function(bundle_path) {
+load_bundle = function(bundle_path, pretraining_type = "SCARF") {
 
 
   if (is.character(bundle_path)){
@@ -20,6 +20,8 @@ load_scarf_bundle = function(bundle_path) {
   }
 
   # Validate input
+
+  # SCARF bundle
   if(is.list(model_bundle) && identical(model_bundle$bundle_type, "scarf_bundle")) {
 
     # Load encoder hyperparameters
@@ -47,7 +49,7 @@ load_scarf_bundle = function(bundle_path) {
     ))
 
   } else {
-    stop("The input is not a scarf_bundle. Please, train the model using scarf_fit() and set the pretrained_model_path to the path in which the trained model is stored")
+    stop("The input is not a valid bundle. Please, train a model using fit_extractor() and set the pretrained_model_path to the path in which the trained model is stored")
   }
 }
 

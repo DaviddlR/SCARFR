@@ -2,6 +2,7 @@
 #'
 #' @param dataframe A \code{data.frame} from which to extract features.
 #' @param pretrained_model \code{String} or \code{list}. Path to the pretrained SCARF model (.pt file) if String or SCARF bundle if \code{list}.
+#' @param pretraining_type A \code{character} indicating the pretraining objective. Default is \code{"SCARF"}, so that it will use a SCARF pretrained module. Available options are \code{["SCARF"]}.
 #' @param exclude_columns A \code{string} of columns that the model should ignore during inference (i.e target or ID columns). Default is \code{NULL}.
 #' @param want_labels \code{Boolean}. If \code{TRUE}, the function extracts and returns the target labels alongside features. Default is \code{FALSE}.
 #' @param label_column \code{String}. Name of the column containing the labels. Required if \code{want_labels = TRUE}. Default is \code{NULL}.
@@ -31,17 +32,21 @@
 #' tmp_path <- tempfile(fileext = ".pt")
 #'
 #' # Fit SCARF one epoch
-#' scarf_fit(
+#' fit_extractor(
 #'   dataframe_train = df_train,
+#'   pretraining_type = "SCARF",
 #'   exclude_columns = c("user_id", "cancellation"),
 #'   n_epochs = 1,
 #'   save_path = tmp_path
 #' )
 #'
+#'
+#'
 #' # Extract features
-#' extracted <- scarf_feature_extractor(
+#' extracted <- extract_features(
 #'   dataframe = df_train,
 #'   pretrained_model = tmp_path,
+#'   pretraining_type = "SCARF",
 #'   exclude_columns = c("user_id", "cancellation"),
 #'   want_labels = TRUE,
 #'   label_column = "cancellation"
@@ -53,40 +58,40 @@
 #' if (file.exists(tmp_path)) file.remove(tmp_path)
 #'
 #' }
-scarf_feature_extractor = function(
-    dataframe,
-    pretrained_model,
-    exclude_columns = NULL,
-    want_labels = FALSE,
-    label_column = NULL,
-    batch_size = 32,
-    preprocess = TRUE
+extract_features = function(
+  dataframe,
+  pretrained_model,
+  pretraining_type = "SCARF",
+  exclude_columns = NULL,
+  want_labels = FALSE,
+  label_column = NULL,
+  batch_size = 32,
+  preprocess = TRUE
   ) {
 
-  # Extract pretrained model and recipe
-  bundle <- load_scarf_bundle(pretrained_model)
 
+  # Load bundle (inside, it validates if it comes from a valid pretraining)
+  bundle <- load_bundle(bundle_path = pretrained_model, pretraining_type = pretraining_type)
 
+  # Extract encoder and recipe (if exists)
   fitted_encoder <- bundle$encoder
   trained_recipe <- bundle$recipe
 
-
   # Prepare data
   if (want_labels & is.null(label_column)) {
-    stop("scarf_feature_extractor: if 'want_labels' is TRUE, then you have to specify the label column with the parameter 'label_column'")
+    stop("extract_features: if 'want_labels' is TRUE, then you have to specify the label column with the parameter 'label_column'")
   }
 
 
-  dataframe_cleaned_xy <- prepare_scarf_data_for_feature_extraction(dataframe, trained_recipe, exclude_columns, want_labels = want_labels, label_column = label_column, preprocess = preprocess)
+  dataframe_cleaned_xy <- prepare_data_for_feature_extraction(dataframe, trained_recipe, exclude_columns, want_labels = want_labels, label_column = label_column, preprocess = preprocess)
   dataframe_cleaned <- dataframe_cleaned_xy$x
   dataframe_labels <- dataframe_cleaned_xy$y
-
 
   dataset_ready <- create_tensor_dataset(dataframe_cleaned)
 
   dataloader_ready <- torch::dataloader(dataset_ready,
-                         batch_size = batch_size,
-                         shuffle = FALSE)
+                                        batch_size = batch_size,
+                                        shuffle = FALSE)
 
   # Prepare model
   device <- if(torch::cuda_is_available()) torch::torch_device("cuda") else torch::torch_device("cpu")
@@ -128,7 +133,40 @@ scarf_feature_extractor = function(
   return(list(
     features = all_features,
     features_labels = dataframe_labels
-    ))
+  ))
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+scarf_feature_extractor = function(
+    dataframe,
+    pretrained_model,
+    exclude_columns = NULL,
+    want_labels = FALSE,
+    label_column = NULL,
+    batch_size = 32,
+    preprocess = TRUE
+  ) {
+
+  print("scarf_feature_extractor: you should not be here, I will be removed soon D:")
 
 
 }
