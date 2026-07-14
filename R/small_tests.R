@@ -8,7 +8,7 @@ test_scarf_iris = function() {
   # 1. Definir la receta
   # Usamos Species como Target. Las numéricas serán procesadas por SCARF.
   rec_spec_iris <- recipes::recipe(Species ~ ., data = iris) |>
-    step_extract_latent(recipes::all_numeric_predictors(), epochs = 2)
+    step_extract_latent(recipes::all_numeric_predictors(), epochs = 2) |>
 
   # 2. Entrenar la receta (Ejecuta el PREP y entrena SCARF)
   message("Entrenando SCARF con iris...")

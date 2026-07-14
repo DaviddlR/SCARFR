@@ -39,6 +39,7 @@
 #' inference or transformation phase (\code{bake}). Default is \code{32}
 #' @param pretrained_model The pretrained model object once the step has been
 #' executed by \code{prep()}.
+#' @param columns Columns to be processed. Should not be modified. Default is \code{NULL}
 #' @param skip A logical. Should the step be skipped when the recipe is baked
 #' by \code{bake()}? Defaults to \code{FALSE} so that the transformation is
 #' applied to both training and test sets.
@@ -85,7 +86,7 @@ step_extract_latent <- function(
         epochs = epochs,
         batch_size_inference = batch_size_inference,
         pretrained_model = pretrained_model,
-        columns = columns,
+        columns = NULL,
         skip = skip,
         id = id
       )
@@ -213,4 +214,61 @@ bake.step_extract_latent <- function(object, new_data, ...) {
 
 
 }
+
+
+
+
+
+
+# Three additional methods: print, tidy y require_pkgs
+
+
+# Custom print method for step_extract_latent
+#' @importFrom recipes print_step
+#' @export
+print.step_extract_latent <- function(x, width = max(20, options()$width - 30), ...) {
+
+  title <- paste0("Latent feature extraction with ", x$pretraining_type)
+
+  recipes::print_step(
+    tr_obj = x$columns,  # Names after prep:
+    untr_obj = x$terms,  # Names before prep
+    trained = x$trained,  # Has it been prepped?
+    title = title,  # What does this step do?
+    width = width  # An estimate of how many characters to print on a line:
+  )
+
+  invisible(x)
+
+}
+
+
+# Tidy. Which columns have been or will be affected
+#' @importFrom generics tidy
+#' @export
+tidy.step_extract_latent <- function(x, ...) {
+  if (is_trained(x)) {
+    res <- tibble::tibble(
+      terms = x$columns,
+    )
+  } else {
+    res <- tibble::tibble(
+      terms = recipes::sel2char(x$terms)
+    )
+  }
+
+  res$id <- x$id
+  res
+}
+
+
+# Required packages
+#' @importFrom recipes required_pkgs
+#' @export
+required_pkgs.step_extract_latent <- function(x, ...) {
+  c("TODO nombre paquete", "torch")  # TODO actualizar esto
+}
+
+
+
 

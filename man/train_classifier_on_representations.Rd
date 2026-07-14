@@ -28,6 +28,8 @@ train_classifier_on_representations(
 
 \item{exclude_columns}{A \code{string} of columns that the models should ignore (i.e target or ID columns). Default is \code{NULL}.}
 
+\item{parsnip_classification_model}{A \code{parsnip} classification model that has been already created and loaded. Default is \code{NULL}}
+
 \item{classification_model_type}{\code{String}. Type of architecture to train. Currently, \code{"MLP", "Random Forest", "XGB", "KNN", "SVM" and "C50"} are supported. Default is \code{NULL}.}
 
 \item{dropout}{\code{Numeric}. Dropout probability for the classification layers. Default is \code{0.2}.}

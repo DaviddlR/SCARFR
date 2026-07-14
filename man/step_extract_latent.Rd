@@ -16,8 +16,9 @@ step_extract_latent(
   epochs = 150,
   batch_size_inference = 32,
   pretrained_model = NULL,
+  columns = NULL,
   skip = FALSE,
-  id = rand_id("extract_latent")
+  id = recipes::rand_id("extract_latent")
 )
 }
 \arguments{
@@ -54,6 +55,8 @@ inference or transformation phase (\code{bake}). Default is \code{32}}
 
 \item{pretrained_model}{The pretrained model object once the step has been
 executed by \code{prep()}.}
+
+\item{columns}{Columns to be processed. Should not be modified. Default is \code{NULL}}
 
 \item{skip}{A logical. Should the step be skipped when the recipe is baked
 by \code{bake()}? Defaults to \code{FALSE} so that the transformation is

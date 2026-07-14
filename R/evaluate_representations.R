@@ -9,6 +9,7 @@
 #' @param label_column \code{String}. Name of the column containing the labels. Required if \code{want_labels = TRUE}. Default is \code{NULL}.
 #' @param num_classes \code{Integer}. Total number of unique classes in the target column.
 #' @param exclude_columns A \code{string} of columns that the models should ignore (i.e target or ID columns). Default is \code{NULL}.
+#' @param parsnip_classification_model A \code{parsnip} classification model that has been already created and loaded. Default is \code{NULL}
 #' @param classification_model_type \code{String}. Type of architecture to train. Currently, \code{"MLP", "Random Forest", "XGB", "KNN", "SVM" and "C50"} are supported. Default is \code{NULL}.
 #' @param dropout \code{Numeric}. Dropout probability for the classification layers. Default is \code{0.2}.
 #' @param doitsmall \code{Boolean}. If \code{TRUE}, sub-samples the training set to 1\% for quick experimentation. Default is \code{FALSE}.
