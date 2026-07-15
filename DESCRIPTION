@@ -38,4 +38,6 @@ Suggests:
     kernlab,
     kknn,
     randomForest,
+    testthat (>= 3.0.0),
     xgboost
+Config/testthat/edition: 3

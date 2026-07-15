@@ -64,7 +64,7 @@ if (torch::torch_is_installed()) {
   fit_extractor(
     dataframe_train = df_train,
     pretraining_type = "SCARF",
-    exclude_columns = c("user_id", "cancellation"),
+    exclude_columns = c("id", "target"),
     n_epochs = 1,
     save_path = tmp_pretrained
   )
@@ -75,7 +75,7 @@ if (torch::torch_is_installed()) {
     pretrained_model = tmp_pretrained,
     label_column = "target",
     num_classes = 2,
-    exclude_columns = "id",
+    exclude_columns = c("id", "target"),
     classification_model_type = "MLP",
     save_path = tmp_class
   )

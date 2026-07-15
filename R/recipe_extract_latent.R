@@ -71,7 +71,6 @@ step_extract_latent <- function(
   id = recipes::rand_id("extract_latent")
 
   ) {
-  # TODO: corregir para escalabilidad
     # Add step
     recipes::add_step(
       recipe,
