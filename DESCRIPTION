@@ -1,6 +1,6 @@
-Package: scaRf
+Package: latter
 Type: Package
-Title: Train, use and evaluate SCARF on a given dataset
+Title: Train, use and evaluate Self-Supervised models on a given dataset.
 Version: 0.1.0
 Authors@R: c(
     person(
@@ -9,14 +9,15 @@ Authors@R: c(
       role = c("aut", "cre")
     )
   )
-Description: A set of tools to train and evaluate the SCARF model into a given 
-    dataset. You provide the data and create and train a SCARF model using 
-    'scarf_fit'. Then, you can use the pretrained model, stored in your machine,
+Description: A set of tools to train and evaluate Self-Supervised Learning 
+    models into a given dataset. You provide the data and create and train a model using 
+    'fit_extractor'. Then, you can use the pretrained model, stored in your machine,
     to extract the latent representations of a given dataset using 
-    'scarf_feature_extractor'. The package allows the evaluation of the 
+    'extract_features'. The package allows the evaluation of the 
     representations by training a classifier with 
-    'train_classifier_on_representations', and the evaluation of the 
-    classifier with 'downstream_prediction'.
+    'train_classifier_on_extracted_features', and testing it with 'downstream_prediction'.
+    To facilitate the use of latter, we have implemented a 'recipes' new step to train
+    a model and extract the latent representation of a given dataset.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

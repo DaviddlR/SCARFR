@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(scaRf)
+library(latter)
 
-test_check("scaRf")
+test_check("latter")
