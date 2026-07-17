@@ -72,7 +72,7 @@ fit_extractor <- function (
               preprocess = preprocess
     )
   } else {
-    stop("The selected 'pretraining_type' is not supported. Please select one of the available options: 'SCARF'.")
+    stop("The selected 'pretraining_type' is not supported. Please select one of the available options: 'SCARF'")
   }
 
   # Store the pretrained model locally or in RAM memory
