@@ -1,3 +1,6 @@
+# FINISHED
+
+
 create_dummy_data <- function() {
   data.frame(
     id = 1:20,
@@ -8,7 +11,7 @@ create_dummy_data <- function() {
   )
 }
 
-
+# Simple test and output
 test_that("fit_extractor with SCARF works and outputs correct structure", {
   skip_if_not_installed("torch")
 
@@ -39,11 +42,14 @@ test_that("fit_extractor with SCARF works and outputs correct structure", {
 
   # Check saved file
   loaded_bundle <- torch::torch_load(paste0(tmp_file, ".pt"))
+  expect_type(loaded_bundle, "list")
   expect_equal(loaded_bundle$bundle_type, "scarf_bundle")
 
 })
 
 
+
+# NULL save_path
 test_that("fit_extractor handles NULL save_path without writing to disk", {
   skip_if_not_installed("torch")
 
@@ -64,6 +70,8 @@ test_that("fit_extractor handles NULL save_path without writing to disk", {
 })
 
 
+
+# Invalid method
 test_that("fit_extractor throws errors on invalid inputs", {
   skip_if_not_installed("torch")
 
@@ -76,5 +84,10 @@ test_that("fit_extractor throws errors on invalid inputs", {
   )
 
 })
+
+
+
+
+
 
 

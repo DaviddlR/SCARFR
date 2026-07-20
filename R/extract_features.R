@@ -126,9 +126,9 @@ extract_features = function(
   # Convert to matrix
   all_features <- as.matrix(all_features)
 
-  print("Extracted features: ")
-  print(dim(all_features))
-  print(length(dataframe_labels))
+  # print("Extracted features: ")
+  # print(dim(all_features))
+  # print(length(dataframe_labels))
 
   return(list(
     features = all_features,

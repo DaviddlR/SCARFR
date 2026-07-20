@@ -109,12 +109,12 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
       x_val <- as.matrix(x_val_processed)
     }
 
-    print("Train set: ")
-    print(dim(x_train))
-    if(create_validation){
-      print("Validation set: ")
-      print(dim(x_val))
-    }
+    # print("Train set: ")
+    # print(dim(x_train))
+    # if(create_validation){
+    #   print("Validation set: ")
+    #   print(dim(x_val))
+    # }
 
     # Optimize recipe by removing unnecessary data (butcher package)
     optimized_recipe <- butcher::butcher(trained_recipe)

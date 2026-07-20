@@ -12,8 +12,9 @@
 #' @param exclude_columns A \code{string} of columns that the models should ignore (i.e target or ID columns). Default is \code{NULL}.
 #' @param parsnip_classification_model A \code{parsnip} classification model that has been already created and loaded. Default is \code{NULL}
 #' @param classification_model_type \code{String}. Type of architecture to train. Currently, \code{"MLP", "Random Forest", "XGB", "KNN", "SVM" and "C50"} are supported. Default is \code{NULL}.
+#' @param n_epochs \code{Integer}. Number of training epochs if classification_model_type is 'MLP'. Default is \code{50}.
 #' @param dropout \code{Numeric}. Dropout probability for the classification layers. Default is \code{0.2}.
-#' @param doitsmall \code{Boolean}. If \code{TRUE}, sub-samples the training set to 1\% for quick experimentation. Default is \code{FALSE}.
+#' @param doitsmall \code{Boolean}. If \code{TRUE}, sub-samples the training set to 5\% for quick experimentation. Default is \code{FALSE}.
 #' @param save_path \code{String}. Path where the trained classifier bundle (.pt) will be saved. Extension ('.pt') should not be included. Default is \code{"classifier"}, which saves a 'classifier.pt' file in the current directory.
 #'
 #' @returns Invisible \code{NULL}. Saves a serialized classifier bundle containing the network weights, hyperparameters, and the target factor levels to disk.
@@ -56,7 +57,7 @@
 #'   if (file.exists(paste0(tmp_class, ".pt"))) file.remove(paste0(tmp_class, ".pt"))
 #' }
 #' }
-train_classifier_on_extracted_features = function(df_train, pretrained_model_path, pretraining_type, label_column, num_classes, exclude_columns = NULL, parsnip_classification_model = NULL, classification_model_type = NULL, dropout = 0.2, doitsmall = FALSE, save_path = "classifier") {
+train_classifier_on_extracted_features = function(df_train, pretrained_model_path, pretraining_type, label_column, num_classes, exclude_columns = NULL, parsnip_classification_model = NULL, classification_model_type = NULL, n_epochs = 50, dropout = 0.2, doitsmall = FALSE, save_path = "classifier") {
 
 
   if(doitsmall) {
@@ -130,7 +131,7 @@ train_classifier_on_extracted_features = function(df_train, pretrained_model_pat
       ) |>
       luz::fit(
         train_dl,
-        epochs = 50,
+        epochs = n_epochs,
         valid_data = val_dl,
       )
 
@@ -194,7 +195,7 @@ train_classifier_on_extracted_features = function(df_train, pretrained_model_pat
       "SVM" = parsnip::svm_rbf(mode = "classification") |> parsnip::set_engine("kernlab"),
       "KNN" = parsnip::nearest_neighbor(mode = "classification", neighbors = 5) |> parsnip::set_engine("kknn"),
       "C50" = parsnip::decision_tree(mode = "classification") |> parsnip::set_engine("C5.0"),
-      stop("Classification model not supported. Please, create the model yourself using parsnip and send the object as hyperparameter of this function with 'parsnip_classification_model_object' = your_model'. ")
+      stop("Classification model not supported. Please, use one of the available options ['MLP', Random Forest', 'XGB', 'SVM', 'KNN', 'C50'] or create the model yourself using parsnip and send the object as hyperparameter of this function with 'parsnip_classification_model_object' = your_model'. ")
     )
 
 
@@ -415,7 +416,7 @@ downstream_prediction = function(df_test, pretrained_model_path, pretraining_typ
     prob_df <- parsnip::predict.model_fit(fitted_classifier, new_data = features_df, type = "prob")  # Get probabilities
     class_df <- parsnip::predict.model_fit(fitted_classifier, new_data = features_df, type = "class")  # Get class predictions
 
-    probabilities = unname(as.matrix(prob_df))
+    probabilities = unname(as.array(prob_df))
 
 
     pred_label <- as.character(class_df$.pred_class)
