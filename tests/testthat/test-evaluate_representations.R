@@ -310,13 +310,74 @@ test_that("downstream_prediction works with MLP classifier", {
 
 
 test_that("downstream_prediction works with parsnip classifier", {
+  skip_if_not_installed("torch")
+  skip_if_not_installed("parsnip")
+  skip_if_not_installed("randomForest")
 
+  setup <- prediction_pipeline_setup()
+
+
+  on.exit({
+    if (file.exists(paste0(setup$scarf_path, ".pt"))) file.remove(paste0(setup$scarf_path, ".pt"))
+    if (file.exists(paste0(setup$mlp_path, ".pt"))) file.remove(paste0(setup$mlp_path, ".pt"))
+    if (file.exists(paste0(setup$parsnip_path, ".pt"))) file.remove(paste0(setup$parsnip_path, ".pt"))
+  })
+
+
+  results <- downstream_prediction(
+    df_test = setup$df_test,
+    pretrained_model_path = setup$scarf_path,
+    pretraining_type = "SCARF",
+    label_column = "target",
+    classification_model_path = setup$parsnip_path,
+    exclude_columns = c("id", "target"),
+    return_classification_report = FALSE
+  )
+
+  # Check results
+  expect_type(results, "list")
+  expect_named(results, c("predictions", "probabilities"))
+
+  # Check predictions
+  expect_type(results$predictions, "character")
+  expect_equal(length(results$predictions), nrow(setup$df_test))
+  expect_true(all(results$predictions %in% c("a", "b")))
+
+  # Check probabilities
+  expect_true(is.array(results$probabilities))
+  expect_equal(nrow(results$probabilities), nrow(setup$df_test))
+
+  # Softmax sum equal 1
+  row_sums <- apply(results$probabilities, 1, sum)
+  expect_equal(row_sums, rep(1, nrow(setup$df_test)), tolerance = 1e-5)
 })
 
 
 
 test_that("downstream_prediction returns classification report if asked", {
+  skip_if_not_installed("torch")
 
+  setup <- prediction_pipeline_setup()
+
+
+  on.exit({
+    if (file.exists(paste0(setup$scarf_path, ".pt"))) file.remove(paste0(setup$scarf_path, ".pt"))
+    if (file.exists(paste0(setup$mlp_path, ".pt"))) file.remove(paste0(setup$mlp_path, ".pt"))
+    if (file.exists(paste0(setup$parsnip_path, ".pt"))) file.remove(paste0(setup$parsnip_path, ".pt"))
+  })
+
+  expect_output(
+    downstream_prediction(
+      df_test = setup$df_test,
+      pretrained_model_path = setup$scarf_path,
+      pretraining_type = "SCARF",
+      label_column = "target",
+      classification_model_path = setup$mlp_path,
+      exclude_columns = c("id", "target"),
+      return_classification_report = TRUE
+    ),
+    regexp = "CLASSIFICATION REPORT"
+  )
 })
 
 

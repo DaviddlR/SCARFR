@@ -395,32 +395,60 @@ downstream_prediction = function(df_test, pretrained_model_path, pretraining_typ
     sm <- torch::nn_softmax(dim = 2)
     probabilities <- sm(predictions)
     probabilities <- as.array(probabilities)
+    colnames(probabilities) <- fitted_classifier_bundle$levels
 
     print("Probabilities: ")
+    print(probabilities)
     print(dim(probabilities))
     print(probabilities[2, ])
 
+
     # Get predicted class index
     pred_indices <- as.integer(torch::torch_argmax(probabilities, dim=2))
+    print("pred_indices")
+    print(pred_indices)
     print(pred_indices[2])
 
     # Get predicted class name (using train_levels)
     pred_label <- fitted_classifier_bundle$levels[pred_indices]
+    print("pred_label")
+    print(pred_label)
     print(pred_label[2])
+
+
 
     # If classifier is parsnip
   } else if (identical(classifier_type, "parsnip")) {
 
     features_df <- as.data.frame(features_test)
-
     prob_df <- parsnip::predict.model_fit(fitted_classifier, new_data = features_df, type = "prob")  # Get probabilities
     class_df <- parsnip::predict.model_fit(fitted_classifier, new_data = features_df, type = "class")  # Get class predictions
 
-    probabilities = unname(as.array(prob_df))
+    print("test")
+    print(class_df)  # de aqui tiene que salir pred_label
+    print(fitted_classifier_bundle$levels)
 
+    # Generate probabilities
+    expected_cols <- paste0(".pred_", fitted_classifier_bundle$levels)
+    probabilities <- as.matrix(prob_df[, expected_cols, drop = FALSE])
+    colnames(probabilities) <- fitted_classifier_bundle$levels
+    print("Probabilities")  # Good
+    print(probabilities)
+    print(dim(probabilities))
+    print(probabilities[2, ])
 
+    # Get class label
     pred_label <- as.character(class_df$.pred_class)
-    pred_indices <- as.integer(class_df$.pred_class)
+    print("pred_label")
+    print(pred_label)
+    print(pred_label[2])
+
+    # Get predicted class index
+    pred_indices <- match(pred_label, fitted_classifier_bundle$levels)
+    print("pred_indices")
+    print(pred_indices)
+    print(pred_indices[2])
+
 
 
 

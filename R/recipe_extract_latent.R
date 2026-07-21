@@ -249,7 +249,7 @@ print.step_extract_latent <- function(x, width = max(20, options()$width - 30), 
 #' @importFrom generics tidy
 #' @export
 tidy.step_extract_latent <- function(x, ...) {
-  if (is_trained(x)) {
+  if (x$trained) {
     res <- tibble::tibble(
       terms = x$columns,
     )
@@ -268,7 +268,7 @@ tidy.step_extract_latent <- function(x, ...) {
 #' @importFrom recipes required_pkgs
 #' @export
 required_pkgs.step_extract_latent <- function(x, ...) {
-  c("TODO nombre paquete", "torch")  # TODO actualizar esto
+  c("latter", "torch")
 }
 
 
