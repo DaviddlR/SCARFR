@@ -2,7 +2,7 @@
 % Please edit documentation in R/losses.R
 \name{nt_xent_loss}
 \alias{nt_xent_loss}
-\title{Title}
+\title{nt_xent_loss}
 \usage{
 nt_xent_loss(temperature = 0.5)
 }
@@ -13,5 +13,5 @@ nt_xent_loss(temperature = 0.5)
 A 'torch::nn_module' representing the nt_xent_loss function.
 }
 \description{
-Title
+nt_xent_loss
 }

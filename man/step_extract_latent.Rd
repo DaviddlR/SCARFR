@@ -83,5 +83,37 @@ contains categorical data, before using this step, you must:
 }
 }
 \examples{
-a <- 1
+df_train <- data.frame(
+  id = 1:20,
+  num1 = rnorm(20),
+  num2 = runif(20),
+  num3 = rnorm(20, mean = 5),
+  target = factor(sample(c("a", "b"), 20, replace = TRUE))
+)
+
+df_test <- data.frame(
+  id = 1:20,
+  num1 = rnorm(20),
+  num2 = runif(20),
+  num3 = rnorm(20, mean = 5),
+  target = factor(sample(c("a", "b"), 20, replace = TRUE))
+)
+
+recipe <- recipes::recipe(target ~ ., data = df_train) |>
+recipes::update_role(id, new_role = "id") |>
+step_extract_latent(
+  recipes::all_numeric_predictors(),
+  pretraining_type = "SCARF",
+  epochs = 1,
+  batch_size = 8,
+  batch_size_inference = 8
+)
+
+prepped_recipe <- recipes::prep(
+  recipe,
+  training = df_train
+)
+
+baked_df <- recipes::bake(prepped_recipe, new_data = df_test)
+
 }

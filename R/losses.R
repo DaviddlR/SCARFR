@@ -1,4 +1,4 @@
-#' Title
+#' nt_xent_loss
 #'
 #' @param temperature Controls how sharply the model discriminates between hard and easy negative examples
 #'

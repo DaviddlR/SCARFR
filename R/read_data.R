@@ -89,9 +89,12 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
     # One hot encoding + standard scaler
     rec <- recipes::recipe(~ ., data=x_train)
 
-    rec <- recipes::step_novel(rec, recipes::all_nominal_predictors(), new_level = "unknown") |>  # New categorical levels (should not be used)
-      recipes::step_normalize(recipes::all_numeric_predictors()) |>  # Standard normalization
-      recipes::step_dummy(recipes::all_nominal_predictors(), one_hot = TRUE)  # One-hot encoding
+    rec <- recipes::step_impute_mean(rec, recipes::all_numeric_predictors()) |>  # Missing numeric - impute with mean
+      recipes::step_impute_mode(recipes::all_nominal_predictors()) |>  # Missing categorical - impute with mode
+      recipes::step_novel(recipes::all_nominal_predictors(), new_level = "unknown") |>  # New categorical levels (should not be used)
+      # recipes::step_dummy(recipes::all_nominal_predictors(), one_hot = TRUE) |>  # One-hot encoding. FIX: done after marginal sampling (corruption phase)
+      recipes::step_zv(recipes::all_predictors()) |>  # Drop constant columns
+      recipes::step_normalize(recipes::all_numeric_predictors())   # Standard normalization
 
 
     # Fit recipe to training set
@@ -109,6 +112,13 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
       x_val <- as.matrix(x_val_processed)
     }
 
+
+
+    # Get info about categorical variables
+    cat_cols <- names(which(sapply(x_train, is.character) | sapply(x_train, is.factor)))
+    num_cat_cols <- setdiff(names(x_train), cat_cols)
+    cat_levels <- sapply(cat_cols, function(col) length(unique(x_train[[col]])))
+
     # print("Train set: ")
     # print(dim(x_train))
     # if(create_validation){
@@ -124,11 +134,17 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
     if (create_validation){
       x_val <- as.matrix(x_val)
     }
+    cat_cols <- NULL
+    num_cat_cols <- NULL
+    cat_levels <- NULL
   }
 
   return (list("train_set" = x_train,
                "val_set" = x_val,
-               "recipe" = optimized_recipe))
+               "recipe" = optimized_recipe,
+               "cat_cols" = cat_cols,
+               "num_cat_cols" = num_cat_cols,
+               "cat_levels" = cat_levels))
 
 }
 

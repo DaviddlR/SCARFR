@@ -62,7 +62,7 @@ scarf_fit = function(
       train_dl,
       epochs = n_epochs,
       valid_data = val_dl,
-      callbacks = list(custom_scarf_step_callback(corruption_rate = 0.6))
+      callbacks = list(replacement_corruption_step_callback(corruption_rate = 0.6))
     )
 
 
@@ -102,13 +102,63 @@ scarf_fit = function(
 
 
 
-custom_scarf_step_callback <- luz::luz_callback(
+############ VIME PRETRAINING ############
+vime_fit = function(
+    dataframe_train,
+    exclude_columns = NULL,
+    create_validation = FALSE,
+    validation_proportion = 0.1,
+    batch_size = 256,
+    n_epochs = 1,
+    preprocess = TRUE
+) {
 
-  name = "SCARF_custom_steps",
+  a <- 1
+}
+
+
+
+
+
+
+
+replacement_corruption_step_callback <- luz::luz_callback(
+
+  name = "replacement_corruption_custom_step",
 
   initialize = function(corruption_rate = 0.6) {
     self$corruption_rate = corruption_rate
   },
+
+
+  apply_one_hot_encoding = function(tensor_input) {
+    # TODO: necesito el número de columnas categóricas, numéricas y categoría por cada variable
+    a <- 1
+  },
+
+  process_batch = function(x) {
+
+    # Batch size and number of features
+    batch_size <- x$size(1)
+    num_features <- x$size(2)
+
+    # Generate mask based on the corruption rate
+    mask <- torch::torch_rand_like(x) < self$corruption_rate
+
+    # Take random indices
+    random_indices <- torch::torch_randint(
+      low = 1,
+      high = batch_size + 1,  # 1 and +1 because R indices start at 1
+      size = c(batch_size, num_features),
+      device = x$device,
+      dtype = torch::torch_long()
+    )
+
+    # Replace selected features
+    x_random <- torch::torch_gather(x, dim=1, index = random_indices)
+    x_corrupted <- torch::torch_where(mask, x_random, x)
+  },
+
 
 
 
@@ -127,6 +177,8 @@ custom_scarf_step_callback <- luz::luz_callback(
 
     mask <- torch::torch_rand_like(x) < self$corruption_rate
 
+
+
     random_indices <- torch::torch_randint(
       low = 1,
       high = batch_size + 1,  # 1 and +1 because R indices start at 1
@@ -139,7 +191,7 @@ custom_scarf_step_callback <- luz::luz_callback(
     x_corrupted <- torch::torch_where(mask, x_random, x)
 
     #ctx$batch[[2]] <- batch$y
-    ctx$batch[[1]] <- c(x, x_corrupted)
+    ctx$batch[[1]] <- list(x, x_corrupted)
 
 
 
@@ -170,7 +222,7 @@ custom_scarf_step_callback <- luz::luz_callback(
     x_corrupted <- torch::torch_where(mask, x_random, x)
 
     #ctx$target <- batch$y
-    ctx$input <- c(x, x_corrupted)
+    ctx$batch[[1]] <- list(x, x_corrupted)
   },
 
 
@@ -185,10 +237,6 @@ custom_scarf_step_callback <- luz::luz_callback(
 
 
 
-
-
-
-############ VIME PRETRAINING ############
 
 
 
