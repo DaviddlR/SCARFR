@@ -24,7 +24,7 @@ prepare_scarf_data(
 \item{preprocess}{\code{Boolean}. Set if the data need preprocessing steps using 'recipes', such as 'step_normalize' or 'step_dummy'. Default is \code{TRUE}, meaning that this process is automatically done.}
 }
 \value{
-Preprocessed train dataset (and validation set if required) and the recipes::recipe used for preprocessing
+Preprocessed train dataset (and validation set if required), the recipes::recipe used for preprocessing and feature groups after One-Hot Encoding
 }
 \description{
 Prepare data for SCARF pretraining

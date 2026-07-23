@@ -61,13 +61,15 @@ prepare_data_for_feature_extraction = function(dataframe, trained_recipe, exclud
 #' @param validation_proportion Proportion of the training samples that will be used to create the validation set, if required.
 #' @param preprocess \code{Boolean}. Set if the data need preprocessing steps using 'recipes', such as 'step_normalize' or 'step_dummy'. Default is \code{TRUE}, meaning that this process is automatically done.
 #'
-#' @returns Preprocessed train dataset (and validation set if required) and the recipes::recipe used for preprocessing
+#' @returns Preprocessed train dataset (and validation set if required), the recipes::recipe used for preprocessing and feature groups after One-Hot Encoding
 prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_validation = FALSE, validation_proportion = 0.1, preprocess = TRUE) {
 
   df_train_data <- as.data.frame(dataframe_train)
 
   # Remove unneeded columns
   x_train_orig <- df_train_data[, !(names(df_train_data) %in% exclude_columns), drop=FALSE]
+
+  clean_colnames <- colnames(x_train_orig)
 
   # Validation set
   if(create_validation){
@@ -88,17 +90,25 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
     # We are not inside a recipe workflow, so we prep and bake required preprocessing steps
     # One hot encoding + standard scaler
     rec <- recipes::recipe(~ ., data=x_train)
-
-    rec <- recipes::step_novel(rec, recipes::all_nominal_predictors(), new_level = "unknown") |>  # New categorical levels (should not be used)
+    rec <- recipes::step_impute_median(rec, recipes::all_numeric_predictors()) |>
+      recipes::step_impute_mode(recipes::all_nominal_predictors()) |>
+      recipes::step_novel(recipes::all_nominal_predictors(), new_level = "unknown") |>  # New categorical levels (should not be used)
       recipes::step_normalize(recipes::all_numeric_predictors()) |>  # Standard normalization
-      recipes::step_dummy(recipes::all_nominal_predictors(), one_hot = TRUE)  # One-hot encoding
+      recipes::step_dummy(recipes::all_nominal_predictors(), one_hot = TRUE) |>  # One-hot encoding
+      recipes::step_zv(recipes::all_predictors())
 
 
     # Fit recipe to training set
     trained_recipe <- recipes::prep(rec, training = x_train)
 
+
     # Apply preprocessing to train and create matrix
     x_train_processed <- recipes::bake(trained_recipe, new_data = x_train)
+
+    # Get feature groups prior one-hot encoding
+    feature_groups <- get_feature_groups(x_train_processed, clean_colnames)
+
+
     x_train <- as.matrix(x_train_processed)
 
 
@@ -124,11 +134,15 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
     if (create_validation){
       x_val <- as.matrix(x_val)
     }
+
+    feature_groups <- lapply(seq_len(ncol(x_train)), function(i) i)  # Each column is its own group
+    names(feature_groups) <- colnames(x_train)
   }
 
   return (list("train_set" = x_train,
                "val_set" = x_val,
-               "recipe" = optimized_recipe))
+               "recipe" = optimized_recipe,
+               "feature_groups" = feature_groups))
 
 }
 

@@ -127,3 +127,19 @@ create_validation_set = function(x, validation_proportion) {
 
 
 
+# Get the groups of features that have been affected by one-hot encoding. For instance, column x1 is now expanded to columns 10-15 after OHE
+get_feature_groups <- function(preprocessed_df, original_colnames) {
+  preprocessed_names <- colnames(preprocessed_df)
+
+  groups <- lapply(original_colnames, function(var_name) {
+    idx <- which(preprocessed_names == var_name | grepl(paste0("^", var_name, "_"), preprocessed_names))
+    return(idx)
+  })
+
+  names(groups) <- original_colnames
+
+  return(groups)
+}
+
+
+
