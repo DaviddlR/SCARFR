@@ -81,7 +81,7 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
     x_val <- NULL
   }
 
-  optimized_recipe = NULL
+  optimized_recipe <- NULL
 
   # Preprocessing with recipes
   if (preprocess) {
@@ -101,8 +101,8 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
     trained_recipe <- recipes::prep(rec, training = x_train)
 
     # Apply preprocessing to train and create matrix
-    x_train_processed <- recipes::bake(trained_recipe, new_data = x_train)
-    x_train <- as.matrix(x_train_processed)
+    x_train <- recipes::bake(trained_recipe, new_data = x_train)
+    #x_train <- as.matrix(x_train_processed)
 
 
 
@@ -116,7 +116,7 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
 
     # Get info about categorical variables
     cat_cols <- names(which(sapply(x_train, is.character) | sapply(x_train, is.factor)))
-    num_cat_cols <- setdiff(names(x_train), cat_cols)
+    num_cols <- setdiff(names(x_train), cat_cols)
     cat_levels <- sapply(cat_cols, function(col) length(unique(x_train[[col]])))
 
     # print("Train set: ")
@@ -143,7 +143,7 @@ prepare_scarf_data = function(dataframe_train, exclude_columns = NULL, create_va
                "val_set" = x_val,
                "recipe" = optimized_recipe,
                "cat_cols" = cat_cols,
-               "num_cat_cols" = num_cat_cols,
+               "num_cols" = num_cols,
                "cat_levels" = cat_levels))
 
 }
